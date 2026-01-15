@@ -275,16 +275,7 @@ public class OrderPageController extends BaseController {
                 }
             }
 
-            model.addAttribute("pageTitle", "订单详情 - " + order.getOrderNumber());
-            model.addAttribute("activeMenu", "orders");
-            model.addAttribute("contentPage", "orders/detail.jsp");
-            model.addAttribute("order", order);
 
-            // 设置用户权限信息
-            if (user != null) {
-                model.addAttribute("isCustomer", user.getUserType() == 3);
-                model.addAttribute("currentUser", user);
-            }
 
             // 设置面包屑导航
             List<Map<String, String>> breadcrumb = new ArrayList<>();
