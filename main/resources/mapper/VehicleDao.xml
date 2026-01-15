@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jmu.fyl.logistics.dao.VehicleDao">
+
+    <resultMap id="vehicleMap" type="Vehicle">
+        <id property="vehicleId" column="vehicle_id"/>
+        <result property="licensePlate" column="license_plate"/>
+        <result property="vehicleType" column="vehicle_type"/>
+        <result property="loadCapacity" column="load_capacity"/>
+        <result property="status" column="status"/>
+        <result property="currentStationId" column="current_station_id"/>
+        <result property="currentDriverId" column="current_driver_id"/> <!-- 新增 -->
+        <result property="driverName" column="driver_name"/>
+        <result property="driverPhone" column="driver_phone"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 关联查询 -->
+        <association property="currentStation" javaType="Station"
+                     column="current_station_id" select="jmu.fyl.logistics.dao.StationDao.findById"/>
+        <association property="currentDriver" javaType="Driver"
+                     column="current_driver_id" select="jmu.fyl.logistics.dao.DriverDao.findById"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="Vehicle" useGeneratedKeys="true" keyProperty="vehicleId">
+        INSERT INTO vehicles (license_plate, vehicle_type, load_capacity, status,
+                              current_station_id, current_driver_id, driver_name, driver_phone)
+        VALUES (#{licensePlate}, #{vehicleType}, #{loadCapacity}, #{status},
+                #{currentStationId}, #{currentDriverId}, #{driverName}, #{driverPhone})
+    </insert>
+
+    <update id="update" parameterType="Vehicle">
+        UPDATE vehicles
+        <set>
+            <if test="licensePlate != null and licensePlate != ''">license_plate = #{licensePlate},</if>
+            <if test="vehicleType != null and vehicleType != ''">vehicle_type = #{vehicleType},</if>
+            <if test="loadCapacity != null">load_capacity = #{loadCapacity},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="currentStationId != null">current_station_id = #{currentStationId},</if>
+            <if test="currentDriverId != null">current_driver_id = #{currentDriverId},</if>
+            <if test="driverName != null and driverName != ''">driver_name = #{driverName},</if>
+            <if test="driverPhone != null and driverPhone != ''">driver_phone = #{driverPhone},</if>
+            update_time = NOW()
+        </set>
+        WHERE vehicle_id = #{vehicleId}
+    </update>
+
+    <!-- 新增：assignDriver方法 -->
+    <update id="assignDriver">
+        UPDATE vehicles SET current_driver_id = #{driverId}, update_time = NOW()
+        WHERE vehicle_id = #{vehicleId}
+    </update>
+
+    <!-- 新增：clearDriver方法 -->
+    <update id="clearDriver">
+        UPDATE vehicles SET current_driver_id = NULL, update_time = NOW()
+        WHERE vehicle_id = #{vehicleId}
+    </update>
+
+    <!-- 新增：findByCurrentDriverId方法 -->
+    <select id="findByCurrentDriverId" parameterType="int" resultMap="vehicleMap">
+        SELECT * FROM vehicles
+        WHERE current_driver_id = #{driverId}
+        ORDER BY license_plate
+    </select>
+
+    <update id="updateStatus">
+        UPDATE vehicles SET status = #{status}, update_time = NOW()
+        WHERE vehicle_id = #{vehicleId}
+    </update>
+
+    <update id="updateCurrentStation">
+        UPDATE vehicles SET current_station_id = #{stationId}, update_time = NOW()
+        WHERE vehicle_id = #{vehicleId}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM vehicles WHERE vehicle_id = #{id}
+    </delete>
+
+    <select id="findById" parameterType="int" resultMap="vehicleMap">
+        SELECT * FROM vehicles WHERE vehicle_id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="vehicleMap">
+        SELECT * FROM vehicles ORDER BY create_time DESC
+    </select>
+
+    <select id="findByLicensePlate" parameterType="string" resultMap="vehicleMap">
+        SELECT * FROM vehicles WHERE license_plate = #{licensePlate}
+    </select>
+
+    <select id="findByStationId" parameterType="int" resultMap="vehicleMap">
+        SELECT * FROM vehicles
+        WHERE current_station_id = #{stationId}
+        ORDER BY license_plate
+    </select>
+
+    <select id="findByStatus" parameterType="int" resultMap="vehicleMap">
+        SELECT * FROM vehicles
+        WHERE status = #{status}
+        ORDER BY license_plate
+    </select>
+
+    <select id="findAvailableVehicles" resultMap="vehicleMap">
+        SELECT * FROM vehicles
+        WHERE status = 1
+          AND current_station_id = #{stationId}
+          AND load_capacity >= #{minCapacity}
+        ORDER BY load_capacity
+    </select>
+
+    <!-- 在findByCondition中增加currentDriverId条件 -->
+    <select id="findByCondition" parameterType="map" resultMap="vehicleMap">
+        SELECT * FROM vehicles
+        <where>
+            <if test="licensePlate != null and licensePlate != ''">AND license_plate LIKE CONCAT('%', #{licensePlate}, '%')</if>
+            <if test="vehicleType != null and vehicleType != ''">AND vehicle_type = #{vehicleType}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="driverName != null and driverName != ''">AND driver_name LIKE CONCAT('%', #{driverName}, '%')</if>
+            <if test="currentStationId != null">AND current_station_id = #{currentStationId}</if>
+            <if test="currentDriverId != null">AND current_driver_id = #{currentDriverId}</if>
+        </where>
+        ORDER BY create_time DESC
+        <if test="start != null and limit != null">
+            LIMIT #{limit} OFFSET #{start}
+        </if>
+    </select>
+
+    <!-- 在countByCondition中增加currentDriverId条件 -->
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM vehicles
+        <where>
+            <if test="licensePlate != null and licensePlate != ''">AND license_plate LIKE CONCAT('%', #{licensePlate}, '%')</if>
+            <if test="vehicleType != null and vehicleType != ''">AND vehicle_type = #{vehicleType}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="driverName != null and driverName != ''">AND driver_name LIKE CONCAT('%', #{driverName}, '%')</if>
+            <if test="currentStationId != null">AND current_station_id = #{currentStationId}</if>
+            <if test="currentDriverId != null">AND current_driver_id = #{currentDriverId}</if>
+        </where>
+    </select>
+
+
+
+
+</mapper>

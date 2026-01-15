@@ -1,0 +1,197 @@
+/* 自定义样式文件 */
+:root {
+    --sidebar-width: 220px; /* 减少宽度 */
+    --header-height: 56px;
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --sidebar-bg: #f8f9fa; /* 改为浅色背景 */
+    --sidebar-color: #495057;
+    --sidebar-active: #0d6efd;
+}
+
+/* 登录页面样式 - 移到页面特定样式 */
+.login-page {
+    background: var(--primary-gradient);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+/* 侧边栏样式 - 修改为与Bootstrap兼容 */
+.sidebar {
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height));
+    position: sticky;
+    top: var(--header-height);
+    overflow-y: auto;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid #dee2e6;
+    padding-top: 20px;
+}
+
+.sidebar .nav {
+    flex-direction: column;
+}
+
+.sidebar .nav-link {
+    color: var(--sidebar-color);
+    padding: 0.5rem 1rem;
+    margin: 0.1rem 0.5rem;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #000;
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--sidebar-active);
+    color: white;
+}
+
+.sidebar .nav-link i {
+    width: 1.5rem;
+    margin-right: 0.5rem;
+    text-align: center;
+}
+
+/* 子菜单样式 */
+.sidebar .nav ul.nav {
+    padding-left: 1.5rem;
+    margin-top: 0.25rem;
+}
+
+.sidebar .nav ul.nav .nav-link {
+    padding: 0.375rem 1rem;
+    font-size: 0.875rem;
+    margin: 0.05rem 0;
+}
+
+/* 主内容区域 - 移除固定定位，使用Bootstrap栅格 */
+main {
+    min-height: calc(100vh - var(--header-height));
+    padding: 20px;
+    background-color: #fff;
+}
+
+/* 调整头部样式，与Bootstrap导航栏兼容 */
+.navbar {
+    height: var(--header-height);
+    padding: 0 1rem;
+}
+
+/* 确保容器正确布局 */
+.container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 767.98px) {
+    :root {
+        --sidebar-width: 100%;
+    }
+
+    .sidebar {
+        position: static;
+        height: auto;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    main.col-md-9 {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+/* 页面标题区域优化 */
+.d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    background: #fff;
+    position: sticky;
+    top: var(--header-height);
+    z-index: 10;
+}
+
+/* 卡片样式调整 */
+.card {
+    border: 1px solid #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+}
+
+/* 表格优化 */
+.table th {
+    white-space: nowrap;
+    background-color: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* 操作按钮组 */
+.btn-group-sm {
+    flex-wrap: nowrap;
+}
+
+/* 分页居中 */
+.pagination {
+    justify-content: center;
+    margin-top: 1.5rem;
+    margin-bottom: 0;
+}
+
+/* 移除冲突样式 */
+.header,
+.sidebar-sticky,
+.main-content {
+    /* 移除这些可能冲突的样式 */
+}
+
+/* 确保内容不超出 */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* 空状态 */
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.empty-state i {
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+/* 徽章样式 */
+.badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+    font-weight: 600;
+}
+
+/* 加载遮罩 */
+#loadingOverlay {
+    z-index: 9999;
+}

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jmu.fyl.logistics.dao.OrderDao">
+
+    <resultMap id="orderMap" type="Order">
+        <id property="orderId" column="order_id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="senderName" column="sender_name"/>
+        <result property="senderPhone" column="sender_phone"/>
+        <result property="senderAddress" column="sender_address"/>
+        <result property="receiverName" column="receiver_name"/>
+        <result property="receiverPhone" column="receiver_phone"/>
+        <result property="receiverAddress" column="receiver_address"/>
+        <result property="goodsType" column="goods_type"/>
+        <result property="weight" column="weight"/>
+        <result property="volume" column="volume"/>
+        <result property="freight" column="freight"/>
+        <result property="status" column="status"/>
+        <result property="startStationId" column="start_station_id"/>
+        <result property="currentStationId" column="current_station_id"/>
+        <result property="endStationId" column="end_station_id"/>
+        <result property="vehicleId" column="vehicle_id"/>
+        <result property="transportTaskId" column="transport_task_id"/> <!-- 新增 -->
+        <result property="createUserId" column="create_user_id"/>
+        <result property="expectedArrivalTime" column="expected_arrival_time"/>
+        <result property="actualArrivalTime" column="actual_arrival_time"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 关联查询 -->
+        <association property="startStation" javaType="jmu.fyl.logistics.entity.Station"
+                     column="start_station_id" select="jmu.fyl.logistics.dao.StationDao.findById"/>
+        <association property="currentStation" javaType="jmu.fyl.logistics.entity.Station"
+                     column="current_station_id" select="jmu.fyl.logistics.dao.StationDao.findById"/>
+        <association property="endStation" javaType="jmu.fyl.logistics.entity.Station"
+                     column="end_station_id" select="jmu.fyl.logistics.dao.StationDao.findById"/>
+        <association property="vehicle" javaType="jmu.fyl.logistics.entity.Vehicle"
+                     column="vehicle_id" select="jmu.fyl.logistics.dao.VehicleDao.findById"/>
+        <association property="createUser" javaType="jmu.fyl.logistics.entity.User"
+                     column="create_user_id" select="jmu.fyl.logistics.dao.UserDao.findById"/>
+        <association property="transportTask" javaType="jmu.fyl.logistics.entity.TransportTask"
+                     column="transport_task_id" select="jmu.fyl.logistics.dao.TransportTaskDao.findById"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="Order" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO orders (order_number, sender_name, sender_phone, sender_address,
+                            receiver_name, receiver_phone, receiver_address, goods_type,
+                            weight, volume, freight, status, start_station_id, current_station_id,
+                            end_station_id, vehicle_id, transport_task_id, create_user_id,
+                            expected_arrival_time, actual_arrival_time, remark)
+        VALUES (#{orderNumber}, #{senderName}, #{senderPhone}, #{senderAddress},
+                #{receiverName}, #{receiverPhone}, #{receiverAddress}, #{goodsType},
+                #{weight}, #{volume}, #{freight}, #{status}, #{startStationId}, #{currentStationId},
+                #{endStationId}, #{vehicleId}, #{transportTaskId}, #{createUserId},
+                #{expectedArrivalTime}, #{actualArrivalTime}, #{remark})
+    </insert>
+
+    <update id="update" parameterType="Order">
+        UPDATE orders
+        <set>
+            <if test="orderNumber != null and orderNumber != ''">order_number = #{orderNumber},</if>
+            <if test="senderName != null and senderName != ''">sender_name = #{senderName},</if>
+            <if test="senderPhone != null and senderPhone != ''">sender_phone = #{senderPhone},</if>
+            <if test="senderAddress != null and senderAddress != ''">sender_address = #{senderAddress},</if>
+            <if test="receiverName != null and receiverName != ''">receiver_name = #{receiverName},</if>
+            <if test="receiverPhone != null and receiverPhone != ''">receiver_phone = #{receiverPhone},</if>
+            <if test="receiverAddress != null and receiverAddress != ''">receiver_address = #{receiverAddress},</if>
+            <if test="goodsType != null and goodsType != ''">goods_type = #{goodsType},</if>
+            <if test="weight != null">weight = #{weight},</if>
+            <if test="volume != null">volume = #{volume},</if>
+            <if test="freight != null">freight = #{freight},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="startStationId != null">start_station_id = #{startStationId},</if>
+            <if test="currentStationId != null">current_station_id = #{currentStationId},</if>
+            <if test="endStationId != null">end_station_id = #{endStationId},</if>
+            <if test="vehicleId != null">vehicle_id = #{vehicleId},</if>
+            <if test="transportTaskId != null">transport_task_id = #{transportTaskId},</if>
+            <if test="createUserId != null">create_user_id = #{createUserId},</if>
+            <if test="expectedArrivalTime != null">expected_arrival_time = #{expectedArrivalTime},</if>
+            <if test="actualArrivalTime != null">actual_arrival_time = #{actualArrivalTime},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            update_time = NOW()
+        </set>
+        WHERE order_id = #{orderId}
+    </update>
+
+    <!-- 新增：assignTransportTask方法 -->
+    <update id="assignTransportTask">
+        UPDATE orders SET transport_task_id = #{taskId}, update_time = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <!-- 新增：findByTransportTaskId方法 -->
+    <select id="findByTransportTaskId" parameterType="int" resultMap="orderMap">
+        SELECT * FROM orders WHERE transport_task_id = #{transportTaskId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 新增：findByVehicleId方法 -->
+    <select id="findByVehicleId" parameterType="int" resultMap="orderMap">
+        SELECT * FROM orders WHERE vehicle_id = #{vehicleId}
+        ORDER BY create_time DESC
+    </select>
+
+
+    <update id="updateStatus">
+        UPDATE orders SET status = #{status}, update_time = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <update id="updateCurrentStation">
+        UPDATE orders SET current_station_id = #{stationId}, update_time = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <update id="assignVehicle">
+        UPDATE orders SET vehicle_id = #{vehicleId}, update_time = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM orders WHERE order_id = #{id}
+    </delete>
+
+    <select id="findById" parameterType="int" resultMap="orderMap">
+        SELECT * FROM orders WHERE order_id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="orderMap">
+        SELECT * FROM orders ORDER BY create_time DESC
+    </select>
+
+    <select id="findByOrderNumber" parameterType="string" resultMap="orderMap">
+        SELECT * FROM orders WHERE order_number = #{orderNumber}
+    </select>
+
+    <select id="findByStatus" parameterType="int" resultMap="orderMap">
+        SELECT * FROM orders
+        WHERE status = #{status}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findBySenderPhone" parameterType="string" resultMap="orderMap">
+        SELECT * FROM orders
+        WHERE sender_phone = #{phone}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByReceiverPhone" parameterType="string" resultMap="orderMap">
+        SELECT * FROM orders
+        WHERE receiver_phone = #{phone}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByCreateUserId" parameterType="int" resultMap="orderMap">
+        SELECT * FROM orders
+        WHERE create_user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByCreateTimeRange" resultMap="orderMap">
+        SELECT * FROM orders
+        WHERE create_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findOrdersByStation" resultMap="orderMap">
+        SELECT * FROM orders
+        WHERE (start_station_id = #{stationId} OR current_station_id = #{stationId} OR end_station_id = #{stationId})
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY create_time DESC
+    </select>
+
+
+    <select id="getOrderStats" resultType="map">
+        SELECT
+            COUNT(*) as total_orders,
+            SUM(freight) as total_freight,
+            AVG(freight) as avg_freight,
+            MAX(freight) as max_freight,
+            MIN(freight) as min_freight,
+            SUM(weight) as total_weight,
+            AVG(weight) as avg_weight
+        FROM orders
+    </select>
+
+    <select id="getOrderStatsByDate" resultType="map">
+        SELECT
+            DATE(create_time) as order_date,
+            COUNT(*) as order_count,
+            SUM(freight) as daily_freight,
+            SUM(weight) as daily_weight
+        FROM orders
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(create_time)
+        ORDER BY order_date
+    </select>
+
+    <select id="findByCondition" parameterType="map" resultMap="orderMap">
+        SELECT * FROM orders
+        <where>
+            <if test="orderNumber != null and orderNumber != ''">AND order_number LIKE CONCAT('%', #{orderNumber}, '%')</if>
+            <if test="senderName != null and senderName != ''">AND sender_name LIKE CONCAT('%', #{senderName}, '%')</if>
+            <if test="senderPhone != null and senderPhone != ''">AND sender_phone = #{senderPhone}</if>
+            <if test="receiverName != null and receiverName != ''">AND receiver_name LIKE CONCAT('%', #{receiverName}, '%')</if>
+            <if test="receiverPhone != null and receiverPhone != ''">AND receiver_phone = #{receiverPhone}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="goodsType != null and goodsType != ''">AND goods_type = #{goodsType}</if>
+            <if test="startStationId != null">AND start_station_id = #{startStationId}</if>
+            <if test="endStationId != null">AND end_station_id = #{endStationId}</if>
+            <if test="vehicleId != null">AND vehicle_id = #{vehicleId}</if>
+            <if test="transportTaskId != null">AND transport_task_id = #{transportTaskId}</if>
+            <if test="startTime != null and endTime != null">
+                AND create_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        <if test="start != null and limit != null">
+            LIMIT #{limit} OFFSET #{start}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM orders
+        <where>
+            <if test="orderNumber != null and orderNumber != ''">AND order_number LIKE CONCAT('%', #{orderNumber}, '%')</if>
+            <if test="senderName != null and senderName != ''">AND sender_name LIKE CONCAT('%', #{senderName}, '%')</if>
+            <if test="senderPhone != null and senderPhone != ''">AND sender_phone = #{senderPhone}</if>
+            <if test="receiverName != null and receiverName != ''">AND receiver_name LIKE CONCAT('%', #{receiverName}, '%')</if>
+            <if test="receiverPhone != null and receiverPhone != ''">AND receiver_phone = #{receiverPhone}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="goodsType != null and goodsType != ''">AND goods_type = #{goodsType}</if>
+            <if test="startStationId != null">AND start_station_id = #{startStationId}</if>
+            <if test="endStationId != null">AND end_station_id = #{endStationId}</if>
+            <if test="vehicleId != null">AND vehicle_id = #{vehicleId}</if>
+            <if test="transportTaskId != null">AND transport_task_id = #{transportTaskId}</if>
+            <if test="startTime != null and endTime != null">
+                AND create_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+        </where>
+    </select>
+
+</mapper>

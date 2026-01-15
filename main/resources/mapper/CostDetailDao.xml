@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jmu.fyl.logistics.dao.CostDetailDao">
+
+    <resultMap id="costDetailMap" type="CostDetail">
+        <id property="costId" column="cost_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="taskId" column="task_id"/>
+        <result property="costType" column="cost_type"/>
+        <result property="costCategory" column="cost_category"/>
+        <result property="amount" column="amount"/>
+        <result property="currency" column="currency"/>
+        <result property="payerId" column="payer_id"/>
+        <result property="payeeId" column="payee_id"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="paymentTime" column="payment_time"/>
+        <result property="invoiceNumber" column="invoice_number"/>
+        <result property="invoiceStatus" column="invoice_status"/>
+        <result property="costDescription" column="cost_description"/>
+        <result property="costTime" column="cost_time"/>
+        <result property="accountedBy" column="accounted_by"/>
+        <result property="accountedTime" column="accounted_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 关联查询 -->
+        <association property="order" javaType="Order"
+                     column="order_id" select="jmu.fyl.logistics.dao.OrderDao.findById"/>
+        <association property="task" javaType="TransportTask"
+                     column="task_id" select="jmu.fyl.logistics.dao.TransportTaskDao.findById"/>
+        <association property="payer" javaType="User"
+                     column="payer_id" select="jmu.fyl.logistics.dao.UserDao.findById"/>
+        <association property="payee" javaType="User"
+                     column="payee_id" select="jmu.fyl.logistics.dao.UserDao.findById"/>
+        <association property="accountUser" javaType="User"
+                     column="accounted_by" select="jmu.fyl.logistics.dao.UserDao.findById"/>
+    </resultMap>
+
+    <!-- 基础CRUD方法 -->
+    <insert id="insert" parameterType="CostDetail" useGeneratedKeys="true" keyProperty="costId">
+        INSERT INTO cost_details (order_id, task_id, cost_type, cost_category, amount, currency,
+                                  payer_id, payee_id, payment_status, payment_method, payment_time,
+                                  invoice_number, invoice_status, cost_description, cost_time,
+                                  accounted_by, accounted_time)
+        VALUES (#{orderId}, #{taskId}, #{costType}, #{costCategory}, #{amount}, #{currency},
+                #{payerId}, #{payeeId}, #{paymentStatus}, #{paymentMethod}, #{paymentTime},
+                #{invoiceNumber}, #{invoiceStatus}, #{costDescription}, #{costTime},
+                #{accountedBy}, #{accountedTime})
+    </insert>
+
+    <update id="update" parameterType="CostDetail">
+        UPDATE cost_details
+        <set>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="taskId != null">task_id = #{taskId},</if>
+            <if test="costType != null">cost_type = #{costType},</if>
+            <if test="costCategory != null">cost_category = #{costCategory},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="currency != null and currency != ''">currency = #{currency},</if>
+            <if test="payerId != null">payer_id = #{payerId},</if>
+            <if test="payeeId != null">payee_id = #{payeeId},</if>
+            <if test="paymentStatus != null">payment_status = #{paymentStatus},</if>
+            <if test="paymentMethod != null and paymentMethod != ''">payment_method = #{paymentMethod},</if>
+            <if test="paymentTime != null">payment_time = #{paymentTime},</if>
+            <if test="invoiceNumber != null and invoiceNumber != ''">invoice_number = #{invoiceNumber},</if>
+            <if test="invoiceStatus != null">invoice_status = #{invoiceStatus},</if>
+            <if test="costDescription != null and costDescription != ''">cost_description = #{costDescription},</if>
+            <if test="costTime != null">cost_time = #{costTime},</if>
+            <if test="accountedBy != null">accounted_by = #{accountedBy},</if>
+            <if test="accountedTime != null">accounted_time = #{accountedTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE cost_id = #{costId}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM cost_details WHERE cost_id = #{id}
+    </delete>
+
+    <select id="findById" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details WHERE cost_id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="costDetailMap">
+        SELECT * FROM cost_details ORDER BY create_time DESC
+    </select>
+
+    <!-- 自定义查询方法 -->
+    <select id="findByOrderId" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE order_id = #{orderId}
+        ORDER BY cost_time DESC
+    </select>
+
+    <select id="findByTaskId" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE task_id = #{taskId}
+        ORDER BY cost_time DESC
+    </select>
+
+    <select id="findByCostType" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE cost_type = #{costType}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByCostCategory" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE cost_category = #{costCategory}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByPaymentStatus" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE payment_status = #{paymentStatus}
+        ORDER BY cost_time
+    </select>
+
+    <select id="findByPayerId" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE payer_id = #{payerId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByPayeeId" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE payee_id = #{payeeId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByInvoiceStatus" parameterType="int" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE invoice_status = #{invoiceStatus}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByCostTimeRange" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE cost_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY cost_time DESC
+    </select>
+
+    <select id="findByPaymentTimeRange" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE payment_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY payment_time DESC
+    </select>
+
+    <select id="findByOrderAndType" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        WHERE order_id = #{orderId} AND cost_type = #{costType}
+        ORDER BY cost_time DESC
+    </select>
+
+    <!-- 更新方法 -->
+    <update id="updatePaymentStatus">
+        UPDATE cost_details SET payment_status = #{paymentStatus}, update_time = NOW()
+        WHERE cost_id = #{costId}
+    </update>
+
+    <update id="updatePaymentInfo">
+        UPDATE cost_details
+        SET payment_status = #{paymentStatus},
+            payment_method = #{paymentMethod},
+            payment_time = #{paymentTime},
+            update_time = NOW()
+        WHERE cost_id = #{costId}
+    </update>
+
+    <update id="updateInvoiceInfo">
+        UPDATE cost_details
+        SET invoice_number = #{invoiceNumber},
+            invoice_status = #{invoiceStatus},
+            update_time = NOW()
+        WHERE cost_id = #{costId}
+    </update>
+
+    <!-- 统计方法 -->
+    <select id="getTotalAmountByOrder" parameterType="int" resultType="double">
+        SELECT COALESCE(SUM(amount), 0) FROM cost_details
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="getTotalAmountByTask" parameterType="int" resultType="double">
+        SELECT COALESCE(SUM(amount), 0) FROM cost_details
+        WHERE task_id = #{taskId}
+    </select>
+
+    <select id="getTotalAmountByTimeRange" resultType="double">
+        SELECT COALESCE(SUM(amount), 0) FROM cost_details
+        WHERE cost_time BETWEEN #{startTime} AND #{endTime}
+    </select>
+
+    <select id="getCostStatsByCategory" resultType="map">
+        SELECT
+            cost_category as category,
+            COUNT(*) as count,
+            SUM(amount) as total_amount
+        FROM cost_details
+        WHERE cost_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY cost_category
+    </select>
+
+    <select id="getCostStatsByType" resultType="map">
+        SELECT
+            cost_type as type,
+            COUNT(*) as count,
+            SUM(amount) as total_amount
+        FROM cost_details
+        WHERE cost_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY cost_type
+    </select>
+
+    <select id="getUnpaidCosts" resultType="map">
+        SELECT
+            order_id,
+            payer_id,
+            SUM(amount) as unpaid_amount,
+            COUNT(*) as unpaid_count
+        FROM cost_details
+        WHERE payment_status IN (1,2)  -- 未支付、部分支付
+          AND DATEDIFF(NOW(), cost_time) >= #{days}
+        GROUP BY order_id, payer_id
+        ORDER BY cost_time
+    </select>
+
+    <select id="getRevenueByDate" resultType="map">
+        SELECT
+            DATE(cost_time) as revenue_date,
+            COUNT(*) as cost_count,
+            SUM(CASE WHEN cost_category = 1 THEN amount ELSE 0 END) as revenue_amount,
+            SUM(CASE WHEN cost_category = 2 THEN amount ELSE 0 END) as expense_amount
+        FROM cost_details
+        WHERE cost_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(cost_time)
+        ORDER BY revenue_date
+    </select>
+
+    <!-- 条件查询方法 -->
+    <select id="findByCondition" parameterType="map" resultMap="costDetailMap">
+        SELECT * FROM cost_details
+        <where>
+            <if test="orderId != null">AND order_id = #{orderId}</if>
+            <if test="taskId != null">AND task_id = #{taskId}</if>
+            <if test="costType != null">AND cost_type = #{costType}</if>
+            <if test="costCategory != null">AND cost_category = #{costCategory}</if>
+            <if test="paymentStatus != null">AND payment_status = #{paymentStatus}</if>
+            <if test="invoiceStatus != null">AND invoice_status = #{invoiceStatus}</if>
+            <if test="payerId != null">AND payer_id = #{payerId}</if>
+            <if test="payeeId != null">AND payee_id = #{payeeId}</if>
+            <if test="accountedBy != null">AND accounted_by = #{accountedBy}</if>
+            <if test="minAmount != null">AND amount >= #{minAmount}</if>
+            <if test="maxAmount != null">AND amount &lt;= #{maxAmount}</if>
+            <if test="startTime != null and endTime != null">
+                AND cost_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+            <if test="paymentStartTime != null and paymentEndTime != null">
+                AND payment_time BETWEEN #{paymentStartTime} AND #{paymentEndTime}
+            </if>
+        </where>
+        ORDER BY cost_time DESC
+        <if test="start != null and limit != null">
+            LIMIT #{limit} OFFSET #{start}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM cost_details
+        <where>
+            <if test="orderId != null">AND order_id = #{orderId}</if>
+            <if test="taskId != null">AND task_id = #{taskId}</if>
+            <if test="costType != null">AND cost_type = #{costType}</if>
+            <if test="costCategory != null">AND cost_category = #{costCategory}</if>
+            <if test="paymentStatus != null">AND payment_status = #{paymentStatus}</if>
+            <if test="invoiceStatus != null">AND invoice_status = #{invoiceStatus}</if>
+            <if test="payerId != null">AND payer_id = #{payerId}</if>
+            <if test="payeeId != null">AND payee_id = #{payeeId}</if>
+            <if test="accountedBy != null">AND accounted_by = #{accountedBy}</if>
+            <if test="minAmount != null">AND amount >= #{minAmount}</if>
+            <if test="maxAmount != null">AND amount &lt;= #{maxAmount}</if>
+            <if test="startTime != null and endTime != null">
+                AND cost_time BETWEEN #{startTime} AND #{endTime}
+            </if>
+            <if test="paymentStartTime != null and paymentEndTime != null">
+                AND payment_time BETWEEN #{paymentStartTime} AND #{paymentEndTime}
+            </if>
+        </where>
+    </select>
+
+</mapper>

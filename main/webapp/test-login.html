@@ -1,0 +1,160 @@
+<!-- test-login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>纯HTML登录测试</title>
+    <script>
+        // 获取应用上下文路径
+        function getAppPath() {
+            const path = window.location.pathname;
+            if (path === '/') return '';
+
+            // 例如: /logistics/test-login.html → /logistics
+            const parts = path.split('/');
+            if (parts.length > 1) {
+                return '/' + parts[1];
+            }
+            return '';
+        }
+
+        function testLogin() {
+            const appPath = getAppPath();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            console.log('应用路径:', appPath);
+            console.log('用户名:', username);
+            console.log('密码:', password);
+
+            const url = appPath + '/api/users/login';
+            console.log('请求URL:', url);
+
+            // 显示请求详情
+            document.getElementById('requestInfo').innerHTML = `
+                <strong>请求详情:</strong><br>
+                URL: ${url}<br>
+                方法: POST<br>
+                内容类型: application/json<br>
+                数据: ${JSON.stringify({username, password})}
+            `;
+
+            // 发送请求
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+                .then(response => {
+                    console.log('响应状态:', response.status);
+                    console.log('响应OK:', response.ok);
+
+                    document.getElementById('responseInfo').innerHTML = `
+                    <strong>响应详情:</strong><br>
+                    状态: ${response.status} ${response.statusText}<br>
+                    OK: ${response.ok}
+                `;
+
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('响应文本:', text);
+                    document.getElementById('responseBody').innerHTML = `
+                    <strong>响应内容:</strong><br>
+                    <pre>${text}</pre>
+                `;
+
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.code === 200) {
+                            alert('登录成功！');
+                            // 跳转到控制面板
+                            window.location.href = appPath + '/dashboard';
+                        } else {
+                            alert('登录失败: ' + data.message);
+                        }
+                    } catch (e) {
+                        console.error('JSON解析错误:', e);
+                    }
+                })
+                .catch(error => {
+                    console.error('请求错误:', error);
+                    document.getElementById('errorInfo').innerHTML = `
+                    <strong>错误详情:</strong><br>
+                    消息: ${error.message}<br>
+                    类型: ${error.name}
+                `;
+                    alert('请求失败: ' + error.message);
+                });
+        }
+
+        // 测试不同的URL
+        function testUrls() {
+            const urls = [
+                '/work_war_exploded/api/users/login',
+                '/api/users/login',
+                'api/users/login',
+                './api/users/login'
+            ];
+
+            const resultsDiv = document.getElementById('urlTestResults');
+            resultsDiv.innerHTML = '<h3>URL测试结果:</h3>';
+
+            urls.forEach(url => {
+                fetch(url, { method: 'GET' })
+                    .then(r => {
+                        resultsDiv.innerHTML += `${url} → 状态: ${r.status}<br>`;
+                    })
+                    .catch(e => {
+                        resultsDiv.innerHTML += `${url} → 错误: ${e.message}<br>`;
+                    });
+            });
+        }
+    </script>
+</head>
+<body>
+<h1>纯HTML登录测试</h1>
+
+<div>
+    <label>用户名: <input type="text" id="username" value="admin"></label><br><br>
+    <label>密码: <input type="password" id="password" value="123456"></label><br><br>
+    <button onclick="testLogin()">测试登录</button>
+    <button onclick="testUrls()">测试URL</button>
+</div>
+
+<hr>
+
+<div id="requestInfo" style="background: #f0f0f0; padding: 10px; margin: 10px 0;"></div>
+<div id="responseInfo" style="background: #e0ffe0; padding: 10px; margin: 10px 0;"></div>
+<div id="responseBody" style="background: #ffffe0; padding: 10px; margin: 10px 0;"></div>
+<div id="errorInfo" style="background: #ffe0e0; padding: 10px; margin: 10px 0;"></div>
+<div id="urlTestResults" style="background: #f0f0ff; padding: 10px; margin: 10px 0;"></div>
+
+<hr>
+
+<h3>直接链接测试：</h3>
+<ul>
+    <li><a href="/work_war_exploded/api/users/login" target="_blank">/logistics/api/users/login</a></li>
+    <li><a href="/work_war_exploded/login" target="_blank">/logistics/login (JSP页面)</a></li>
+    <li><a href="/work_war_exploded/dashboard" target="_blank">/logistics/dashboard</a></li>
+    <li><a href="/work_war_exploded/" target="_blank">/logistics/ (首页)</a></li>
+</ul>
+
+<h3>当前页面信息：</h3>
+<p>完整URL: <span id="fullUrl"></span></p>
+<p>路径名: <span id="pathName"></span></p>
+<p>应用路径: <span id="appPath"></span></p>
+
+<script>
+    // 显示当前页面信息
+    document.getElementById('fullUrl').textContent = window.location.href;
+    document.getElementById('pathName').textContent = window.location.pathname;
+    document.getElementById('appPath').textContent = getAppPath();
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jmu.fyl.logistics.dao.CargoItemDao">
+
+    <resultMap id="cargoItemMap" type="CargoItem">
+        <id property="cargoId" column="cargo_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="cargoCode" column="cargo_code"/>
+        <result property="cargoName" column="cargo_name"/>
+        <result property="cargoType" column="cargo_type"/>
+        <result property="quantity" column="quantity"/>
+        <result property="unit" column="unit"/>
+        <result property="unitWeight" column="unit_weight"/>
+        <result property="unitVolume" column="unit_volume"/>
+        <result property="totalWeight" column="total_weight"/>
+        <result property="totalVolume" column="total_volume"/>
+        <result property="declaredValue" column="declared_value"/>
+        <result property="insuranceAmount" column="insurance_amount"/>
+        <result property="packagingType" column="packaging_type"/>
+        <result property="specialRequirements" column="special_requirements"/>
+        <result property="storageConditions" column="storage_conditions"/>
+        <result property="currentLocationType" column="current_location_type"/>
+        <result property="currentStationId" column="current_station_id"/>
+        <result property="status" column="status"/>
+        <result property="lastScanTime" column="last_scan_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 关联查询 -->
+        <association property="order" javaType="Order"
+                     column="order_id" select="jmu.fyl.logistics.dao.OrderDao.findById"/>
+        <association property="currentStation" javaType="Station"
+                     column="current_station_id" select="jmu.fyl.logistics.dao.StationDao.findById"/>
+    </resultMap>
+
+    <!-- 基础CRUD方法 -->
+    <insert id="insert" parameterType="CargoItem" useGeneratedKeys="true" keyProperty="cargoId">
+        INSERT INTO cargo_items (order_id, cargo_code, cargo_name, cargo_type, quantity, unit,
+                                 unit_weight, unit_volume, total_weight, total_volume, declared_value,
+                                 insurance_amount, packaging_type, special_requirements, storage_conditions,
+                                 current_location_type, current_station_id, status, last_scan_time)
+        VALUES (#{orderId}, #{cargoCode}, #{cargoName}, #{cargoType}, #{quantity}, #{unit},
+                #{unitWeight}, #{unitVolume}, #{totalWeight}, #{totalVolume}, #{declaredValue},
+                #{insuranceAmount}, #{packagingType}, #{specialRequirements}, #{storageConditions},
+                #{currentLocationType}, #{currentStationId}, #{status}, #{lastScanTime})
+    </insert>
+
+    <update id="update" parameterType="CargoItem">
+        UPDATE cargo_items
+        <set>
+            <if test="cargoCode != null and cargoCode != ''">cargo_code = #{cargoCode},</if>
+            <if test="cargoName != null and cargoName != ''">cargo_name = #{cargoName},</if>
+            <if test="cargoType != null and cargoType != ''">cargo_type = #{cargoType},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="unitWeight != null">unit_weight = #{unitWeight},</if>
+            <if test="unitVolume != null">unit_volume = #{unitVolume},</if>
+            <if test="totalWeight != null">total_weight = #{totalWeight},</if>
+            <if test="totalVolume != null">total_volume = #{totalVolume},</if>
+            <if test="declaredValue != null">declared_value = #{declaredValue},</if>
+            <if test="insuranceAmount != null">insurance_amount = #{insuranceAmount},</if>
+            <if test="packagingType != null and packagingType != ''">packaging_type = #{packagingType},</if>
+            <if test="specialRequirements != null and specialRequirements != ''">special_requirements = #{specialRequirements},</if>
+            <if test="storageConditions != null and storageConditions != ''">storage_conditions = #{storageConditions},</if>
+            <if test="currentLocationType != null">current_location_type = #{currentLocationType},</if>
+            <if test="currentStationId != null">current_station_id = #{currentStationId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="lastScanTime != null">last_scan_time = #{lastScanTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE cargo_id = #{cargoId}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM cargo_items WHERE cargo_id = #{id}
+    </delete>
+
+    <select id="findById" parameterType="int" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items WHERE cargo_id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items ORDER BY create_time DESC
+    </select>
+
+    <!-- 自定义查询方法 -->
+    <select id="findByOrderId" parameterType="int" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE order_id = #{orderId}
+        ORDER BY cargo_id
+    </select>
+
+    <select id="findByCargoCode" parameterType="string" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE cargo_code = #{cargoCode}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByCargoType" parameterType="string" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE cargo_type = #{cargoType}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByStatus" parameterType="int" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE status = #{status}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByCurrentStationId" parameterType="int" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE current_station_id = #{stationId}
+        ORDER BY status, cargo_id
+    </select>
+
+    <select id="findByCurrentLocationType" parameterType="int" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE current_location_type = #{locationType}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByCodeAndOrder" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE cargo_code = #{cargoCode} AND order_id = #{orderId}
+    </select>
+
+    <select id="findByScanTimeRange" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE last_scan_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY last_scan_time DESC
+    </select>
+
+    <select id="findCargoesByOrderIds" resultMap="cargoItemMap">
+        SELECT * FROM cargo_items
+        WHERE order_id IN
+        <foreach item="orderId" collection="orderIds" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+        ORDER BY order_id, cargo_id
+    </select>
+
+    <!-- 更新方法 -->
+    <update id="updateStatus">
+        UPDATE cargo_items SET status = #{status}, update_time = NOW()
+        WHERE cargo_id = #{cargoId}
+    </update>
+
+    <update id="updateCurrentStation">
+        UPDATE cargo_items SET current_station_id = #{stationId}, update_time = NOW()
+        WHERE cargo_id = #{cargoId}
+    </update>
+
+    <update id="updateCurrentLocation">
+        UPDATE cargo_items
+        SET current_location_type = #{locationType},
+        <if test="stationId != null">current_station_id = #{stationId},</if>
+        update_time = NOW()
+        WHERE cargo_id = #{cargoId}
+    </update>
+
+    <update id="updateLastScanTime">
+        UPDATE cargo_items SET last_scan_time = #{lastScanTime}, update_time = NOW()
+        WHERE cargo_id = #{cargoId}
+    </update>
+
+    <update id="updateMultipleStatus">
+        UPDATE cargo_items SET status = #{status}, update_time = NOW()
+        WHERE cargo_id IN
+        <foreach item="cargoId" collection="cargoIds" open="(" separator="," close=")">
+            #{cargoId}
+        </foreach>
+    </update>
+
+    <!-- 统计方法 -->
+    <select id="getCargoStatsByOrder" parameterType="int" resultType="map">
+        SELECT
+            COUNT(*) as cargo_count,
+            SUM(quantity) as total_quantity,
+            SUM(total_weight) as total_weight,
+            SUM(total_volume) as total_volume,
+            SUM(declared_value) as total_declared_value,
+            SUM(insurance_amount) as total_insurance_amount
+        FROM cargo_items
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="getCargoStatsByStation" parameterType="int" resultType="map">
+        SELECT
+            COUNT(*) as cargo_count,
+            SUM(quantity) as total_quantity,
+            SUM(total_weight) as total_weight,
+            SUM(total_volume) as total_volume
+        FROM cargo_items
+        WHERE current_station_id = #{stationId}
+          AND status IN (2,4,5)  -- 已入库、已到达、待配送
+    </select>
+
+    <!-- 条件查询方法 -->
+    <select id="findByCondition" parameterType="map" resultMap="cargoItemMap">
+        SELECT
+        ci.*,
+        o.order_id as o_order_id,
+        o.order_number,
+        o.sender_name,
+        o.receiver_name,
+        o.goods_type,
+        o.freight,
+        o.status as order_status,
+        o.create_time as order_create_time,
+        o.update_time as order_update_time
+        FROM cargo_items ci
+        LEFT JOIN orders o ON ci.order_id = o.order_id
+        <where>
+            <!-- 客户只能看到自己的订单货物 - 使用 orderNumber 匹配 -->
+            <if test="customerOrderNumbers != null and customerOrderNumbers.size() > 0">
+                AND o.order_number IN
+                <foreach item="orderNumber" collection="customerOrderNumbers" open="(" separator="," close=")">
+                    #{orderNumber}
+                </foreach>
+            </if>
+            <if test="orderId != null">AND ci.order_id = #{orderId}</if>
+            <if test="cargoCode != null and cargoCode != ''">AND ci.cargo_code LIKE CONCAT('%', #{cargoCode}, '%')</if>
+            <if test="cargoName != null and cargoName != ''">AND ci.cargo_name LIKE CONCAT('%', #{cargoName}, '%')</if>
+            <if test="cargoType != null and cargoType != ''">AND ci.cargo_type = #{cargoType}</if>
+            <if test="status != null">AND ci.status = #{status}</if>
+            <if test="currentStationId != null">AND ci.current_station_id = #{currentStationId}</if>
+            <if test="currentLocationType != null">AND ci.current_location_type = #{currentLocationType}</if>
+            <if test="packagingType != null and packagingType != ''">AND ci.packaging_type = #{packagingType}</if>
+            <if test="storageConditions != null and storageConditions != ''">AND ci.storage_conditions = #{storageConditions}</if>
+            <if test="minWeight != null">AND ci.total_weight >= #{minWeight}</if>
+            <if test="maxWeight != null">AND ci.total_weight &lt;= #{maxWeight}</if>
+            <if test="minValue != null">AND ci.declared_value >= #{minValue}</if>
+            <if test="maxValue != null">AND ci.declared_value &lt;= #{maxValue}</if>
+        </where>
+        ORDER BY ci.create_time DESC
+        <if test="start != null and limit != null">
+            LIMIT #{limit} OFFSET #{start}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM cargo_items ci
+        LEFT JOIN orders o ON ci.order_id = o.order_id
+        <where>
+            <!-- 客户只能看到自己的订单货物 - 使用 orderNumber 匹配 -->
+            <if test="customerOrderNumbers != null and customerOrderNumbers.size() > 0">
+                AND o.order_number IN
+                <foreach item="orderNumber" collection="customerOrderNumbers" open="(" separator="," close=")">
+                    #{orderNumber}
+                </foreach>
+            </if>
+            <if test="orderId != null">AND ci.order_id = #{orderId}</if>
+            <if test="cargoCode != null and cargoCode != ''">AND ci.cargo_code LIKE CONCAT('%', #{cargoCode}, '%')</if>
+            <if test="cargoName != null and cargoName != ''">AND ci.cargo_name LIKE CONCAT('%', #{cargoName}, '%')</if>
+            <if test="cargoType != null and cargoType != ''">AND ci.cargo_type = #{cargoType}</if>
+            <if test="status != null">AND ci.status = #{status}</if>
+            <if test="currentStationId != null">AND ci.current_station_id = #{currentStationId}</if>
+            <if test="currentLocationType != null">AND ci.current_location_type = #{currentLocationType}</if>
+            <if test="packagingType != null and packagingType != ''">AND ci.packaging_type = #{packagingType}</if>
+            <if test="storageConditions != null and storageConditions != ''">AND ci.storage_conditions = #{storageConditions}</if>
+            <if test="minWeight != null">AND ci.total_weight >= #{minWeight}</if>
+            <if test="maxWeight != null">AND ci.total_weight &lt;= #{maxWeight}</if>
+            <if test="minValue != null">AND ci.declared_value >= #{minValue}</if>
+            <if test="maxValue != null">AND ci.declared_value &lt;= #{maxValue}</if>
+        </where>
+    </select>
+
+</mapper>

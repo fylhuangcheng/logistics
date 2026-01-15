@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jmu.fyl.logistics.dao.DriverDao">
+
+    <resultMap id="driverMap" type="Driver">
+        <id property="driverId" column="driver_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="licenseNumber" column="license_number"/>
+        <result property="licenseType" column="license_type"/>
+        <result property="licenseExpiryDate" column="license_expiry_date"/>
+        <result property="yearsExperience" column="years_experience"/>
+        <result property="emergencyContact" column="emergency_contact"/>
+        <result property="emergencyPhone" column="emergency_phone"/>
+        <result property="healthStatus" column="health_status"/>
+        <result property="totalMileage" column="total_mileage"/>
+        <result property="safetyScore" column="safety_score"/>
+        <result property="currentStatus" column="current_status"/>
+        <result property="assignedVehicleId" column="assigned_vehicle_id"/>
+        <result property="lastRestTime" column="last_rest_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 关联查询 -->
+        <association property="user" javaType="User"
+                     column="user_id" select="jmu.fyl.logistics.dao.UserDao.findById"/>
+        <association property="assignedVehicle" javaType="Vehicle"
+                     column="assigned_vehicle_id" select="jmu.fyl.logistics.dao.VehicleDao.findById"/>
+    </resultMap>
+
+    <!-- 基础CRUD方法 -->
+    <insert id="insert" parameterType="Driver" useGeneratedKeys="true" keyProperty="driverId">
+        INSERT INTO drivers (user_id, license_number, license_type, license_expiry_date,
+                             years_experience, emergency_contact, emergency_phone, health_status,
+                             total_mileage, safety_score, current_status, assigned_vehicle_id, last_rest_time)
+        VALUES (#{userId}, #{licenseNumber}, #{licenseType}, #{licenseExpiryDate},
+                #{yearsExperience}, #{emergencyContact}, #{emergencyPhone}, #{healthStatus},
+                #{totalMileage}, #{safetyScore}, #{currentStatus}, #{assignedVehicleId}, #{lastRestTime})
+    </insert>
+
+    <update id="update" parameterType="Driver">
+        UPDATE drivers
+        <set>
+            <if test="licenseNumber != null and licenseNumber != ''">license_number = #{licenseNumber},</if>
+            <if test="licenseType != null and licenseType != ''">license_type = #{licenseType},</if>
+            <if test="licenseExpiryDate != null">license_expiry_date = #{licenseExpiryDate},</if>
+            <if test="yearsExperience != null">years_experience = #{yearsExperience},</if>
+            <if test="emergencyContact != null and emergencyContact != ''">emergency_contact = #{emergencyContact},</if>
+            <if test="emergencyPhone != null and emergencyPhone != ''">emergency_phone = #{emergencyPhone},</if>
+            <if test="healthStatus != null and healthStatus != ''">health_status = #{healthStatus},</if>
+            <if test="totalMileage != null">total_mileage = #{totalMileage},</if>
+            <if test="safetyScore != null">safety_score = #{safetyScore},</if>
+            <if test="currentStatus != null">current_status = #{currentStatus},</if>
+            <if test="assignedVehicleId != null">assigned_vehicle_id = #{assignedVehicleId},</if>
+            <if test="lastRestTime != null">last_rest_time = #{lastRestTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE driver_id = #{driverId}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM drivers WHERE driver_id = #{id}
+    </delete>
+
+    <select id="findById" parameterType="int" resultMap="driverMap">
+        SELECT * FROM drivers WHERE driver_id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="driverMap">
+        SELECT * FROM drivers ORDER BY create_time DESC
+    </select>
+
+    <!-- 自定义查询方法 -->
+    <select id="findByUserId" parameterType="int" resultMap="driverMap">
+        SELECT * FROM drivers WHERE user_id = #{userId}
+    </select>
+
+    <select id="findByLicenseNumber" parameterType="string" resultMap="driverMap">
+        SELECT * FROM drivers WHERE license_number = #{licenseNumber}
+    </select>
+
+    <select id="findByCurrentStatus" parameterType="int" resultMap="driverMap">
+        SELECT * FROM drivers WHERE current_status = #{currentStatus} ORDER BY driver_id
+    </select>
+
+    <select id="findByLicenseType" parameterType="string" resultMap="driverMap">
+        SELECT * FROM drivers WHERE license_type = #{licenseType} ORDER BY driver_id
+    </select>
+
+    <select id="findByYearsExperience" resultMap="driverMap">
+        SELECT * FROM drivers
+        WHERE years_experience BETWEEN #{minYears} AND #{maxYears}
+        ORDER BY years_experience DESC
+    </select>
+
+    <select id="findBySafetyScoreRange" resultMap="driverMap">
+        SELECT * FROM drivers
+        WHERE safety_score BETWEEN #{minScore} AND #{maxScore}
+        ORDER BY safety_score DESC
+    </select>
+
+    <select id="findExpiringDrivers" parameterType="int" resultMap="driverMap">
+        SELECT * FROM drivers
+        WHERE DATEDIFF(license_expiry_date, NOW()) BETWEEN 0 AND #{days}
+        ORDER BY license_expiry_date
+    </select>
+
+    <select id="findAvailableDrivers" parameterType="int" resultMap="driverMap">
+        SELECT d.* FROM drivers d
+                            JOIN vehicles v ON d.assigned_vehicle_id = v.vehicle_id
+        WHERE d.current_status = 1  -- 待命状态
+          AND v.current_station_id = #{stationId}
+        ORDER BY d.safety_score DESC
+    </select>
+
+    <select id="findByAssignedVehicleId" parameterType="int" resultMap="driverMap">
+        SELECT * FROM drivers WHERE assigned_vehicle_id = #{vehicleId}
+    </select>
+
+    <!-- 更新方法 -->
+    <update id="updateCurrentStatus">
+        UPDATE drivers SET current_status = #{currentStatus}, update_time = NOW()
+        WHERE driver_id = #{driverId}
+    </update>
+
+    <update id="updateAssignedVehicle">
+        UPDATE drivers SET assigned_vehicle_id = #{vehicleId}, update_time = NOW()
+        WHERE driver_id = #{driverId}
+    </update>
+
+    <update id="updateSafetyScore">
+        UPDATE drivers SET safety_score = #{safetyScore}, update_time = NOW()
+        WHERE driver_id = #{driverId}
+    </update>
+
+    <update id="updateTotalMileage">
+        UPDATE drivers SET total_mileage = total_mileage + #{additionalMileage}, update_time = NOW()
+        WHERE driver_id = #{driverId}
+    </update>
+
+    <update id="updateLastRestTime">
+        UPDATE drivers SET last_rest_time = #{lastRestTime}, update_time = NOW()
+        WHERE driver_id = #{driverId}
+    </update>
+
+    <!-- 条件查询方法 -->
+    <select id="findByCondition" parameterType="map" resultMap="driverMap">
+        SELECT d.* FROM drivers d
+        <where>
+            <if test="licenseNumber != null and licenseNumber != ''">AND d.license_number LIKE CONCAT('%', #{licenseNumber}, '%')</if>
+            <if test="licenseType != null and licenseType != ''">AND d.license_type = #{licenseType}</if>
+            <if test="currentStatus != null">AND d.current_status = #{currentStatus}</if>
+            <if test="minYears != null">AND d.years_experience >= #{minYears}</if>
+            <if test="maxYears != null">AND d.years_experience &lt;= #{maxYears}</if>
+            <if test="minScore != null">AND d.safety_score >= #{minScore}</if>
+            <if test="maxScore != null">AND d.safety_score &lt;= #{maxScore}</if>
+            <if test="userId != null">AND d.user_id = #{userId}</if>
+            <if test="assignedVehicleId != null">AND d.assigned_vehicle_id = #{assignedVehicleId}</if>
+        </where>
+        ORDER BY d.create_time DESC
+        <if test="start != null and limit != null">
+            LIMIT #{limit} OFFSET #{start}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM drivers d
+        <where>
+            <if test="licenseNumber != null and licenseNumber != ''">AND d.license_number LIKE CONCAT('%', #{licenseNumber}, '%')</if>
+            <if test="licenseType != null and licenseType != ''">AND d.license_type = #{licenseType}</if>
+            <if test="currentStatus != null">AND d.current_status = #{currentStatus}</if>
+            <if test="minYears != null">AND d.years_experience >= #{minYears}</if>
+            <if test="maxYears != null">AND d.years_experience &lt;= #{maxYears}</if>
+            <if test="minScore != null">AND d.safety_score >= #{minScore}</if>
+            <if test="maxScore != null">AND d.safety_score &lt;= #{maxScore}</if>
+            <if test="userId != null">AND d.user_id = #{userId}</if>
+            <if test="assignedVehicleId != null">AND d.assigned_vehicle_id = #{assignedVehicleId}</if>
+        </where>
+    </select>
+
+</mapper>

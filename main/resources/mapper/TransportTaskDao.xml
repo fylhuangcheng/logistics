@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jmu.fyl.logistics.dao.TransportTaskDao">
+
+    <resultMap id="transportTaskMap" type="TransportTask">
+        <id property="taskId" column="task_id"/>
+        <result property="taskNumber" column="task_number"/>
+        <result property="taskType" column="task_type"/>
+        <result property="orderIds" column="order_ids"/>
+        <result property="vehicleId" column="vehicle_id"/>
+        <result property="driverId" column="driver_id"/>
+        <result property="startStationId" column="start_station_id"/>
+        <result property="endStationId" column="end_station_id"/>
+        <result property="plannedDepartureTime" column="planned_departure_time"/>
+        <result property="plannedArrivalTime" column="planned_arrival_time"/>
+        <result property="actualDepartureTime" column="actual_departure_time"/>
+        <result property="actualArrivalTime" column="actual_arrival_time"/>
+        <result property="estimatedDistance" column="estimated_distance"/>
+        <result property="actualDistance" column="actual_distance"/>
+        <result property="estimatedDurationMinutes" column="estimated_duration_minutes"/>
+        <result property="taskStatus" column="task_status"/>
+        <result property="routeInfo" column="route_info"/>
+        <result property="weatherConditions" column="weather_conditions"/>
+        <result property="trafficConditions" column="traffic_conditions"/>
+        <result property="fuelConsumption" column="fuel_consumption"/>
+        <result property="taskPriority" column="task_priority"/>
+        <result property="delayReason" column="delay_reason"/>
+        <result property="completionNotes" column="completion_notes"/>
+        <result property="supervisorId" column="supervisor_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!-- 关联查询 -->
+        <association property="vehicle" javaType="Vehicle"
+                     column="vehicle_id" select="jmu.fyl.logistics.dao.VehicleDao.findById"/>
+        <association property="driver" javaType="Driver"
+                     column="driver_id" select="jmu.fyl.logistics.dao.DriverDao.findById"/>
+        <association property="startStation" javaType="Station"
+                     column="start_station_id" select="jmu.fyl.logistics.dao.StationDao.findById"/>
+        <association property="endStation" javaType="Station"
+                     column="end_station_id" select="jmu.fyl.logistics.dao.StationDao.findById"/>
+        <association property="supervisor" javaType="User"
+                     column="supervisor_id" select="jmu.fyl.logistics.dao.UserDao.findById"/>
+    </resultMap>
+
+    <!-- 基础CRUD方法 -->
+    <insert id="insert" parameterType="TransportTask" useGeneratedKeys="true" keyProperty="taskId">
+        INSERT INTO transport_tasks (task_number, task_type, order_ids, vehicle_id, driver_id,
+                                     start_station_id, end_station_id, planned_departure_time, planned_arrival_time,
+                                     estimated_distance, estimated_duration_minutes, task_status, route_info,
+                                     task_priority, supervisor_id)
+        VALUES (#{taskNumber}, #{taskType}, #{orderIds}, #{vehicleId}, #{driverId},
+                #{startStationId}, #{endStationId}, #{plannedDepartureTime}, #{plannedArrivalTime},
+                #{estimatedDistance}, #{estimatedDurationMinutes}, #{taskStatus}, #{routeInfo},
+                #{taskPriority}, #{supervisorId})
+    </insert>
+
+    <update id="update" parameterType="TransportTask">
+        UPDATE transport_tasks
+        <set>
+            <if test="taskNumber != null and taskNumber != ''">task_number = #{taskNumber},</if>
+            <if test="taskType != null">task_type = #{taskType},</if>
+            <if test="orderIds != null and orderIds != ''">order_ids = #{orderIds},</if>
+            <if test="vehicleId != null">vehicle_id = #{vehicleId},</if>
+            <if test="driverId != null">driver_id = #{driverId},</if>
+            <if test="startStationId != null">start_station_id = #{startStationId},</if>
+            <if test="endStationId != null">end_station_id = #{endStationId},</if>
+            <if test="plannedDepartureTime != null">planned_departure_time = #{plannedDepartureTime},</if>
+            <if test="plannedArrivalTime != null">planned_arrival_time = #{plannedArrivalTime},</if>
+            <if test="actualDepartureTime != null">actual_departure_time = #{actualDepartureTime},</if>
+            <if test="actualArrivalTime != null">actual_arrival_time = #{actualArrivalTime},</if>
+            <if test="estimatedDistance != null">estimated_distance = #{estimatedDistance},</if>
+            <if test="actualDistance != null">actual_distance = #{actualDistance},</if>
+            <if test="estimatedDurationMinutes != null">estimated_duration_minutes = #{estimatedDurationMinutes},</if>
+            <if test="taskStatus != null">task_status = #{taskStatus},</if>
+            <if test="routeInfo != null and routeInfo != ''">route_info = #{routeInfo},</if>
+            <if test="weatherConditions != null and weatherConditions != ''">weather_conditions = #{weatherConditions},</if>
+            <if test="trafficConditions != null and trafficConditions != ''">traffic_conditions = #{trafficConditions},</if>
+            <if test="fuelConsumption != null">fuel_consumption = #{fuelConsumption},</if>
+            <if test="taskPriority != null">task_priority = #{taskPriority},</if>
+            <if test="delayReason != null and delayReason != ''">delay_reason = #{delayReason},</if>
+            <if test="completionNotes != null and completionNotes != ''">completion_notes = #{completionNotes},</if>
+            <if test="supervisorId != null">supervisor_id = #{supervisorId},</if>
+            update_time = NOW()
+        </set>
+        WHERE task_id = #{taskId}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM transport_tasks WHERE task_id = #{id}
+    </delete>
+
+    <select id="findById" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks WHERE task_id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks ORDER BY create_time DESC
+    </select>
+
+    <!-- 自定义查询方法 -->
+    <select id="findByTaskNumber" parameterType="string" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks WHERE task_number = #{taskNumber}
+    </select>
+
+    <select id="findByTaskStatus" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE task_status = #{taskStatus}
+        ORDER BY planned_departure_time
+    </select>
+
+    <select id="findByDriverId" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE driver_id = #{driverId}
+        ORDER BY planned_departure_time DESC
+    </select>
+
+    <select id="findByVehicleId" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE vehicle_id = #{vehicleId}
+        ORDER BY planned_departure_time DESC
+    </select>
+
+    <select id="findByStartStationId" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE start_station_id = #{stationId}
+        ORDER BY planned_departure_time DESC
+    </select>
+
+    <select id="findByEndStationId" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE end_station_id = #{stationId}
+        ORDER BY planned_arrival_time DESC
+    </select>
+
+    <select id="findBySupervisorId" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE supervisor_id = #{supervisorId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByTaskType" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE task_type = #{taskType}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="findByPriority" parameterType="int" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE task_priority = #{taskPriority}
+        ORDER BY planned_departure_time
+    </select>
+
+    <select id="findActiveTasks" parameterType="date" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE task_status IN (2,3,4)  -- 已调度、装车中、运输中
+          AND DATE(planned_departure_time) = DATE(#{date})
+        ORDER BY task_priority, planned_departure_time
+    </select>
+
+    <select id="findTasksByDateRange" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        WHERE planned_departure_time BETWEEN #{startDate} AND #{endDate}
+        ORDER BY planned_departure_time
+    </select>
+
+    <!-- 更新方法 -->
+    <update id="updateTaskStatus">
+        UPDATE transport_tasks SET task_status = #{taskStatus}, update_time = NOW()
+        WHERE task_id = #{taskId}
+    </update>
+
+    <update id="updateActualTimes">
+        UPDATE transport_tasks
+        SET actual_departure_time = #{actualDepartureTime},
+            actual_arrival_time = #{actualArrivalTime},
+            actual_distance = #{actualDistance},
+            update_time = NOW()
+        WHERE task_id = #{taskId}
+    </update>
+
+    <update id="updateRouteInfo">
+        UPDATE transport_tasks SET route_info = #{routeInfo}, update_time = NOW()
+        WHERE task_id = #{taskId}
+    </update>
+
+    <update id="updateWeatherConditions">
+        UPDATE transport_tasks SET weather_conditions = #{weatherConditions}, update_time = NOW()
+        WHERE task_id = #{taskId}
+    </update>
+
+    <update id="updateFuelConsumption">
+        UPDATE transport_tasks SET fuel_consumption = #{fuelConsumption}, update_time = NOW()
+        WHERE task_id = #{taskId}
+    </update>
+
+    <update id="assignSupervisor">
+        UPDATE transport_tasks SET supervisor_id = #{supervisorId}, update_time = NOW()
+        WHERE task_id = #{taskId}
+    </update>
+
+    <!-- 统计方法 -->
+    <select id="getTaskStatsByStatus" resultType="map">
+        SELECT
+            task_status as status,
+            COUNT(*) as count
+        FROM transport_tasks
+        GROUP BY task_status
+    </select>
+
+    <select id="getTaskStatsByType" resultType="map">
+        SELECT
+            task_type as type,
+            COUNT(*) as task_count,
+            SUM(estimated_distance) as total_distance,
+            AVG(estimated_duration_minutes) as avg_duration
+        FROM transport_tasks
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY task_type
+    </select>
+
+    <select id="getDriverTaskStats" resultType="map">
+        SELECT
+            COUNT(*) as task_count,
+            SUM(estimated_distance) as total_distance,
+            AVG(TIMESTAMPDIFF(MINUTE, planned_departure_time, planned_arrival_time)) as avg_duration,
+            SUM(CASE WHEN task_status = 7 THEN 1 ELSE 0 END) as completed_count
+        FROM transport_tasks
+        WHERE driver_id = #{driverId}
+          AND create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 条件查询方法 -->
+    <select id="findByCondition" parameterType="map" resultMap="transportTaskMap">
+        SELECT * FROM transport_tasks
+        <where>
+            <if test="taskNumber != null and taskNumber != ''">AND task_number LIKE CONCAT('%', #{taskNumber}, '%')</if>
+            <if test="taskType != null">AND task_type = #{taskType}</if>
+            <if test="taskStatus != null">AND task_status = #{taskStatus}</if>
+            <if test="driverId != null">AND driver_id = #{driverId}</if>
+            <if test="vehicleId != null">AND vehicle_id = #{vehicleId}</if>
+            <if test="startStationId != null">AND start_station_id = #{startStationId}</if>
+            <if test="endStationId != null">AND end_station_id = #{endStationId}</if>
+            <if test="supervisorId != null">AND supervisor_id = #{supervisorId}</if>
+            <if test="taskPriority != null">AND task_priority = #{taskPriority}</if>
+            <if test="startDate != null and endDate != null">
+                AND planned_departure_time BETWEEN #{startDate} AND #{endDate}
+            </if>
+        </where>
+        ORDER BY planned_departure_time DESC
+        <if test="start != null and limit != null">
+            LIMIT #{limit} OFFSET #{start}
+        </if>
+    </select>
+
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM transport_tasks
+        <where>
+            <if test="taskNumber != null and taskNumber != ''">AND task_number LIKE CONCAT('%', #{taskNumber}, '%')</if>
+            <if test="taskType != null">AND task_type = #{taskType}</if>
+            <if test="taskStatus != null">AND task_status = #{taskStatus}</if>
+            <if test="driverId != null">AND driver_id = #{driverId}</if>
+            <if test="vehicleId != null">AND vehicle_id = #{vehicleId}</if>
+            <if test="startStationId != null">AND start_station_id = #{startStationId}</if>
+            <if test="endStationId != null">AND end_station_id = #{endStationId}</if>
+            <if test="supervisorId != null">AND supervisor_id = #{supervisorId}</if>
+            <if test="taskPriority != null">AND task_priority = #{taskPriority}</if>
+            <if test="startDate != null and endDate != null">
+                AND planned_departure_time BETWEEN #{startDate} AND #{endDate}
+            </if>
+        </where>
+    </select>
+
+</mapper>
