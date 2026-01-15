@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,7 +41,8 @@ public class CostDetailPageController extends BaseController {
     public String list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Integer orderId,
+            @RequestParam(required = false) String orderNumber,  // 改为接收orderNumber
+            @RequestParam(required = false) Integer orderId,  // 保留orderId用于其他情况
             @RequestParam(required = false) Integer taskId,
             @RequestParam(required = false) Integer costType,
             @RequestParam(required = false) Integer costCategory,
@@ -48,7 +50,8 @@ public class CostDetailPageController extends BaseController {
             @RequestParam(required = false) Integer payerId,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startTime,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endTime,
-            Model model) {
+            Model model,
+            HttpSession session) {
 
         model.addAttribute("pageTitle", "费用管理");
         model.addAttribute("activeMenu", "cost_details");
@@ -71,7 +74,24 @@ public class CostDetailPageController extends BaseController {
         int start = (page - 1) * size;
 
         Map<String, Object> params = new HashMap<>();
-        params.put("orderId", orderId);
+
+        // 如果传入了orderNumber，需要先查询对应的orderId
+        if (orderNumber != null && !orderNumber.trim().isEmpty()) {
+            try {
+                Order order = orderService.getOrderByOrderNumber(orderNumber.trim());
+                if (order != null) {
+                    params.put("orderId", order.getOrderId());
+                    System.out.println("根据订单号 " + orderNumber + " 找到订单ID: " + order.getOrderId());
+                } else {
+                    System.out.println("订单号 " + orderNumber + " 不存在");
+                }
+            } catch (Exception e) {
+                System.out.println("查询订单号 " + orderNumber + " 出错: " + e.getMessage());
+            }
+        } else {
+            params.put("orderId", orderId);
+        }
+
         params.put("taskId", taskId);
         params.put("costType", costType);
         params.put("costCategory", costCategory);
@@ -84,11 +104,27 @@ public class CostDetailPageController extends BaseController {
         params.put("start", start);
         params.put("limit", size);
 
-        List<CostDetail> costDetails = costDetailService.searchCostDetails(params);
-        int total = costDetailService.countCostDetails(params);
+        // 获取当前登录用户
+        User user = (User) session.getAttribute("user");
+        System.out.println("当前登录用户: " + (user != null ? user.getUsername() + " (类型: " + user.getUserType() + ")" : "null"));
+
+        // 根据用户权限查询费用数据
+        List<CostDetail> costDetails;
+        int total;
+
+        if (user != null) {
+            // 传入用户对象，Service层会根据用户类型过滤数据
+            costDetails = costDetailService.searchCostDetails(params, user);
+            total = costDetailService.countCostDetails(params, user);
+        } else {
+            // 如果没有登录，按管理员权限处理（查看所有）
+            costDetails = costDetailService.searchCostDetails(params);
+            total = costDetailService.countCostDetails(params);
+        }
+
         int totalPages = (int) Math.ceil((double) total / size);
 
-        // ============ 添加符合JSP的Result结构 ============
+        // 创建符合JSP的Result结构
         Map<String, Object> result = new HashMap<>();
         result.put("code", 200);
         result.put("message", "成功");
@@ -102,9 +138,18 @@ public class CostDetailPageController extends BaseController {
 
         result.put("data", data);
         model.addAttribute("result", result);
-        // ============ 添加结束 ============
 
-        // 原有代码保持不变
+        // 搜索参数
+        Map<String, Object> searchParams = new HashMap<>();
+        searchParams.put("orderNumber", orderNumber);
+        searchParams.put("orderId", orderId);
+        searchParams.put("taskId", taskId);
+        searchParams.put("costType", costType);
+        searchParams.put("costCategory", costCategory);
+        searchParams.put("paymentStatus", paymentStatus);
+        searchParams.put("payerId", payerId);
+        model.addAttribute("searchParams", searchParams);
+
         model.addAttribute("costDetails", costDetails);
         model.addAttribute("total", total);
         model.addAttribute("currentPage", page);
@@ -112,8 +157,15 @@ public class CostDetailPageController extends BaseController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("searchParams", params);
 
-        // 获取相关数据
-        model.addAttribute("orders", orderService.getAllOrders());
+        // 获取相关数据（根据用户权限）
+        List<Order> orders;
+        if (user != null && user.getUserType() == 3) { // 客户
+            orders = orderService.getOrdersByUserId(user.getUserId());
+        } else {
+            orders = orderService.getAllOrders(); // 管理员和司机查看所有
+        }
+        model.addAttribute("orders", orders);
+
         model.addAttribute("tasks", transportTaskService.getAllTransportTasks());
         model.addAttribute("users", userService.getAllUsers());
 

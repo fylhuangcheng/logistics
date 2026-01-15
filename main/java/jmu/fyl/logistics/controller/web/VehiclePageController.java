@@ -1,5 +1,6 @@
 package jmu.fyl.logistics.controller.web;
 
+import jmu.fyl.logistics.entity.User;
 import jmu.fyl.logistics.entity.Vehicle;
 import jmu.fyl.logistics.entity.Station;
 import jmu.fyl.logistics.service.VehicleService;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +35,8 @@ public class VehiclePageController extends BaseController {
             @RequestParam(required = false) String vehicleType,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Integer stationId,
-            Model model) {
+            Model model,
+            HttpServletRequest request) {
 
         // 设置页面信息
         model.addAttribute("pageTitle", "车辆管理");
@@ -57,6 +60,38 @@ public class VehiclePageController extends BaseController {
         int start = (page - 1) * size;
 
         Map<String, Object> params = new HashMap<>();
+
+        // ============ 添加权限控制逻辑 ============
+        // 获取当前登录用户
+        Object userObj = request.getSession().getAttribute("user");
+        if (userObj != null && userObj instanceof User) {
+            User currentUser = (User) userObj;
+
+            // 判断用户类型：假设1=管理员，2=司机，3=普通用户
+            if (currentUser.getUserType() != 1) { // 不是管理员
+                // 如果是司机，只显示驾驶员名字是自己的车辆
+                if (currentUser.getUserType() == 2) {
+                    // 司机的姓名就是驾驶员名字
+                    params.put("driverName", currentUser.getRealName());
+                    model.addAttribute("isDriverView", true);
+                    model.addAttribute("currentUserName", currentUser.getRealName());
+                } else {
+                    // 普通用户，可能返回空列表
+                    params.put("driverName", "NO_ACCESS_USER_" + currentUser.getUserId());
+                }
+            } else {
+                model.addAttribute("isAdmin", true);
+            }
+
+            // 设置用户类型标识
+            model.addAttribute("currentUserType", currentUser.getUserType());
+        } else {
+            // 未登录用户，返回空列表
+            params.put("driverName", "NO_LOGIN_USER");
+        }
+        // ============ 权限控制逻辑结束 ============
+
+        // 原有的搜索参数处理
         params.put("licensePlate", licensePlate);
         params.put("vehicleType", vehicleType);
         params.put("status", status);
@@ -87,14 +122,36 @@ public class VehiclePageController extends BaseController {
         model.addAttribute("totalPages", (int) Math.ceil((double) total / size));
         model.addAttribute("searchParams", params);
 
-        // 获取车辆统计
-        model.addAttribute("vehicleStats", vehicleService.getVehicleStats());
+        // 获取车辆统计（只有管理员才显示完整的统计）
+        if (model.containsAttribute("isAdmin")) {
+            model.addAttribute("vehicleStats", vehicleService.getVehicleStats());
+        } else {
+            // 司机视图显示简化的统计
+            Map<String, Object> driverStats = new HashMap<>();
+            driverStats.put("total", total);
+            model.addAttribute("vehicleStats", driverStats);
+        }
 
         return "layout/main";
     }
 
     @GetMapping("/add")
-    public String addForm(Model model) {
+    public String addForm(Model model, HttpServletRequest request) {
+        // 检查权限：只有管理员才能新增车辆
+        Object userObj = request.getSession().getAttribute("user");
+        boolean isAdmin = false;
+        if (userObj != null && userObj instanceof User) {
+            User currentUser = (User) userObj;
+            isAdmin = (currentUser.getUserType() == 1);
+        }
+
+        if (!isAdmin) {
+            model.addAttribute("pageTitle", "权限不足");
+            model.addAttribute("activeMenu", "vehicles");
+            model.addAttribute("contentPage", "error/403.jsp");
+            return "layout/main";
+        }
+
         // 获取所有启用的网点列表
         try {
             List<Station> stations = stationService.getStationsByStatus(1);  // 1表示启用
@@ -130,9 +187,23 @@ public class VehiclePageController extends BaseController {
         return "layout/main";
     }
 
-
     @GetMapping("/{id}/edit")
-    public String editForm(@PathVariable Integer id, Model model) {
+    public String editForm(@PathVariable Integer id, Model model, HttpServletRequest request) {
+        // 检查权限：只有管理员才能编辑车辆
+        Object userObj = request.getSession().getAttribute("user");
+        boolean isAdmin = false;
+        if (userObj != null && userObj instanceof User) {
+            User currentUser = (User) userObj;
+            isAdmin = (currentUser.getUserType() == 1);
+        }
+
+        if (!isAdmin) {
+            model.addAttribute("pageTitle", "权限不足");
+            model.addAttribute("activeMenu", "vehicles");
+            model.addAttribute("contentPage", "error/403.jsp");
+            return "layout/main";
+        }
+
         Vehicle vehicle = vehicleService.getVehicleById(id);
 
         // 获取所有启用的网点列表

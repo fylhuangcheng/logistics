@@ -8,11 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 
 @Controller
 @RequestMapping("/transport_tasks")
@@ -49,7 +46,8 @@ public class TransportTaskPageController extends BaseController {
             @RequestParam(required = false) Integer endStationId,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
-            Model model) {
+            Model model,
+            HttpServletRequest request) {
 
         model.addAttribute("pageTitle", "运输任务管理");
         model.addAttribute("activeMenu", "transport_tasks");
@@ -72,10 +70,46 @@ public class TransportTaskPageController extends BaseController {
         int start = (page - 1) * size;
 
         Map<String, Object> params = new HashMap<>();
+
+        // ============ 添加权限控制逻辑 ============
+        // 获取当前登录用户
+        Object userObj = request.getSession().getAttribute("user");
+        if (userObj != null && userObj instanceof User) {
+            User currentUser = (User) userObj;
+
+            // 判断用户类型：假设1=管理员，2=司机，3=普通用户
+            if (currentUser.getUserType() != 1) { // 不是管理员
+                // 尝试获取司机ID
+                Driver driver = driverService.getDriverByUserId(currentUser.getUserId());
+                if (driver != null) {
+                    // 如果是司机，强制设置driverId为自己
+                    params.put("driverId", driver.getDriverId());
+                    model.addAttribute("isDriverView", true);
+                    model.addAttribute("currentDriver", driver);
+                } else {
+                    // 如果不是司机，可能是普通用户，返回空列表
+                    params.put("driverId", -1); // 设置不存在的driverId
+                }
+            } else {
+                model.addAttribute("isAdmin", true);
+            }
+
+            // 设置用户类型标识
+            model.addAttribute("currentUserType", currentUser.getUserType());
+        }
+        // ============ 权限控制逻辑结束 ============
+
+        // 原有的搜索参数处理
         params.put("taskNumber", taskNumber);
         params.put("taskType", taskType);
         params.put("taskStatus", taskStatus);
-        params.put("driverId", driverId);
+
+        // 如果不是司机视图，才允许使用传入的driverId参数
+        if (!params.containsKey("driverId") && driverId != null &&
+                (model.containsAttribute("isAdmin") || Boolean.TRUE.equals(model.getAttribute("isAdmin")))) {
+            params.put("driverId", driverId);
+        }
+
         params.put("vehicleId", vehicleId);
         params.put("startStationId", startStationId);
         params.put("endStationId", endStationId);
@@ -104,7 +138,6 @@ public class TransportTaskPageController extends BaseController {
 
         result.put("data", data);
         model.addAttribute("result", result);
-        // ============ 添加结束 ============
 
         // 原有代码保持不变
         model.addAttribute("tasks", tasks);
@@ -114,11 +147,14 @@ public class TransportTaskPageController extends BaseController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("searchParams", params);
 
-        // 获取相关数据
-        model.addAttribute("drivers", driverService.getAllDrivers());
-        model.addAttribute("vehicles", vehicleService.getAllVehicles());
-        model.addAttribute("stations", stationService.getAllStations());
-        model.addAttribute("users", userService.getAllUsers());
+        // 获取相关数据（如果是司机视图，可能不需要所有数据）
+        // 管理员才显示所有选项，司机只显示必要信息
+        if (model.containsAttribute("isAdmin") || !model.containsAttribute("isDriverView")) {
+            model.addAttribute("drivers", driverService.getAllDrivers());
+            model.addAttribute("vehicles", vehicleService.getAllVehicles());
+            model.addAttribute("stations", stationService.getAllStations());
+            model.addAttribute("users", userService.getAllUsers());
+        }
 
         return "layout/main";
     }
@@ -152,6 +188,21 @@ public class TransportTaskPageController extends BaseController {
         model.addAttribute("vehicles", vehicleService.getAllVehicles());
         model.addAttribute("stations", stationService.getAllStations());
         model.addAttribute("users", userService.getAllUsers());
+
+        // 获取可用订单
+        Map<String, Object> params = new HashMap<>();
+        params.put("transportTaskId", null); // 获取未分配任务的订单
+        List<Order> orders = orderService.searchOrders(params);
+        model.addAttribute("orders", orders);
+
+        // 新增页面没有已选订单
+        model.addAttribute("selectedOrderIds", new HashSet<Integer>());
+
+        // 创建一个空的TransportTask对象
+        TransportTask task = new TransportTask();
+        task.setTaskStatus(1); // 默认状态
+        task.setTaskPriority(1); // 默认优先级
+        model.addAttribute("transportTask", task);
 
         return "layout/main";
     }
@@ -195,6 +246,26 @@ public class TransportTaskPageController extends BaseController {
         model.addAttribute("stations", stationService.getAllStations());
         model.addAttribute("users", userService.getAllUsers());
 
+        // 获取可用订单
+        Map<String, Object> params = new HashMap<>();
+        params.put("transportTaskId", null); // 获取未分配任务的订单
+        List<Order> orders = orderService.searchOrders(params);
+        model.addAttribute("orders", orders);
+
+        // 创建已选订单ID的集合（用于前端检查复选框状态）
+        Set<Integer> selectedOrderIds = new HashSet<>();
+        if (task.getOrderIds() != null && !task.getOrderIds().trim().isEmpty()) {
+            String[] ids = task.getOrderIds().split(",");
+            for (String idStr : ids) {
+                try {
+                    selectedOrderIds.add(Integer.parseInt(idStr.trim()));
+                } catch (NumberFormatException e) {
+                    // 忽略无效ID
+                }
+            }
+        }
+        model.addAttribute("selectedOrderIds", selectedOrderIds);
+
         return "layout/main";
     }
 
@@ -208,26 +279,28 @@ public class TransportTaskPageController extends BaseController {
             model.addAttribute("contentPage", "error/404.jsp");
             return "layout/main";
         }
-        // 查询关联的订单信息
-        if (task.getOrderIds() != null && !task.getOrderIds().trim().isEmpty()) {
-            List<Order> orders = new ArrayList<>();
-            String[] orderIdArray = task.getOrderIds().split(",");
 
+        // 获取关联订单的详细信息（包含订单号）
+        List<Map<String, Object>> relatedOrderInfos = new ArrayList<>();
+
+        if (task.getOrderIds() != null && !task.getOrderIds().trim().isEmpty()) {
+            String[] orderIdArray = task.getOrderIds().split(",");
             for (String orderIdStr : orderIdArray) {
                 try {
                     Integer orderId = Integer.parseInt(orderIdStr.trim());
                     Order order = orderService.getOrderById(orderId);
                     if (order != null) {
-                        orders.add(order);
+                        Map<String, Object> orderInfo = new HashMap<>();
+                        orderInfo.put("orderId", order.getOrderId());
+                        orderInfo.put("orderNumber", order.getOrderNumber());
+                        orderInfo.put("senderName", order.getSenderName());
+                        orderInfo.put("receiverName", order.getReceiverName());
+                        orderInfo.put("status", order.getStatus());
+                        relatedOrderInfos.add(orderInfo);
                     }
                 } catch (NumberFormatException e) {
-                    // 记录日志
-                    System.err.println("Invalid orderId format: " + orderIdStr);
+                    // 忽略无效的订单ID
                 }
-            }
-
-            if (!orders.isEmpty()) {
-                model.addAttribute("relatedOrders", orders);
             }
         }
 
@@ -235,6 +308,7 @@ public class TransportTaskPageController extends BaseController {
         model.addAttribute("activeMenu", "transport_tasks");
         model.addAttribute("contentPage", "transport_tasks/detail.jsp");
         model.addAttribute("transportTask", task);
+        model.addAttribute("relatedOrderInfos", relatedOrderInfos); // 添加关联订单信息
 
         // 设置面包屑导航
         List<Map<String, String>> breadcrumb = new ArrayList<>();

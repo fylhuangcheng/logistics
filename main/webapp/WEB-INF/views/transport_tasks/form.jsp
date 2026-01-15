@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0">${empty transportTask ? '新增运输任务' : '编辑运输任务'}</h5>
@@ -267,9 +269,13 @@
             </div>
 
             <!-- 关联订单选择 -->
+            <!-- 关联订单选择 -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">关联订单（可选）</h6>
+                    <small class="text-muted">
+                        可用订单: ${not empty orders ? orders.size() : 0} 个
+                    </small>
                 </div>
                 <div class="card-body">
                     <div id="orderSelection">
@@ -278,12 +284,29 @@
                                 <c:forEach items="${orders}" var="order">
                                     <div class="col-md-6">
                                         <div class="form-check mb-2">
+                                                <%-- 复选框value存储orderId，但显示orderNumber --%>
                                             <input class="form-check-input order-checkbox" type="checkbox"
-                                                   name="orderIds" value="${order.orderId}"
+                                                   name="orderIds" value="${order.orderId}" <%-- 发送的是orderId --%>
                                                    id="order${order.orderId}"
-                                                   <c:if test="${transportTask.orderIds != null and transportTask.orderIds.contains(order.orderId)}">checked</c:if>>
+                                                   <c:if test="${selectedOrderIds.contains(order.orderId)}">checked</c:if>>
+
                                             <label class="form-check-label" for="order${order.orderId}">
-                                                    ${order.orderNumber} - ${order.senderName} (${order.goodsType})
+                                                    <%-- 显示orderNumber给用户看 --%>
+                                                <strong>订单号: ${order.orderNumber}</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    发件人: ${order.senderName} |
+                                                    货物: ${order.goodsType} |
+                                                    状态:
+                                                    <c:choose>
+                                                        <c:when test="${order.status == 1}"><span class="badge bg-secondary">已下单</span></c:when>
+                                                        <c:when test="${order.status == 2}"><span class="badge bg-primary">已揽收</span></c:when>
+                                                        <c:when test="${order.status == 3}"><span class="badge bg-info">运输中</span></c:when>
+                                                        <c:when test="${order.status == 4}"><span class="badge bg-warning">已到达</span></c:when>
+                                                        <c:when test="${order.status == 5}"><span class="badge bg-success">已签收</span></c:when>
+                                                        <c:otherwise><span class="badge bg-dark">未知</span></c:otherwise>
+                                                    </c:choose>
+                                                </small>
                                             </label>
                                         </div>
                                     </div>
@@ -291,7 +314,15 @@
                             </div>
                         </c:if>
                         <c:if test="${empty orders}">
-                            <p class="text-muted">暂无可用订单数据</p>
+                            <div class="alert alert-info">
+                                <p>暂无可用订单数据</p>
+                                <small>可能原因：</small>
+                                <ul>
+                                    <li>所有订单都已分配运输任务</li>
+                                    <li>订单尚未到达可运输状态</li>
+                                    <li>数据库中没有订单数据</li>
+                                </ul>
+                            </div>
                         </c:if>
                     </div>
                 </div>
@@ -643,10 +674,12 @@
         // 收集关联订单
         const orderIds = [];
         $('.order-checkbox:checked').each(function() {
-            orderIds.push(parseInt($(this).val()));
+            orderIds.push($(this).val()); // 不要parseInt，直接使用字符串
         });
         if (orderIds.length > 0) {
-            formData.orderIds = orderIds;
+            formData.orderIds = orderIds.join(','); // 改为逗号分隔的字符串
+        } else {
+            formData.orderIds = ''; // 或者不设置这个字段
         }
 
         // 如果是编辑，添加taskId

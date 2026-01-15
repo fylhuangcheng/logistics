@@ -106,6 +106,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public Order getOrderByOrderNumber(String orderNumber) {
+        return orderDao.findByOrderNumber(orderNumber);
+    }
+
+    @Override
     public String generateOrderNumber() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
         String timestamp = sdf.format(new Date());

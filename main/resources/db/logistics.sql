@@ -291,5 +291,4 @@ INSERT INTO cargo_items (order_id, cargo_name, cargo_type, quantity, unit, unit_
 
 -- 插入费用明细数据（accounted_by关联管理员）
 INSERT INTO cost_details (order_id, task_id, cost_type, cost_category, amount, payer_id, payee_id, payment_status, cost_description, accounted_by) VALUES
-                                                                                                                                                       (1, 1, 1, 1, 150.00, 2, 1, 3, '订单基础运费', 1),
-                                                                                                                                                       (1, 1, 2, 1, 50.00, 2, 1, 1, '货物保险费', 1);
+(1, 1, 1, 1, 150.00, 2, 1, 3, '订单基础运费', 1),

@@ -23,7 +23,7 @@
                             <span class="badge bg-danger">管理员</span>
                         </c:when>
                         <c:when test="${user.userType == 2}">
-                            <span class="badge bg-primary">员工</span>
+                            <span class="badge bg-primary">司机</span>
                         </c:when>
                         <c:when test="${user.userType == 3}">
                             <span class="badge bg-success">用户</span>
@@ -80,15 +80,6 @@
                                    value="${user.email}" maxlength="100">
                         </div>
                     </div>
-
-
-                    <!-- 如果是员工，显示所属网点ID -->
-                    <c:if test="${user.userType == 2 and user.stationId != null}">
-                        <div class="mb-3">
-                            <label class="form-label">所属网点ID</label>
-                            <input type="text" class="form-control" value="${user.stationId}" readonly>
-                        </div>
-                    </c:if>
 
                 </form>
             </div>

@@ -1,6 +1,8 @@
 package jmu.fyl.logistics.service;
 
 import jmu.fyl.logistics.entity.CostDetail;
+import jmu.fyl.logistics.entity.User;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,11 @@ public interface CostDetailService {
     List<Map<String, Object>> getCostStatsByType(Date startDate, Date endDate);
     List<Map<String, Object>> getUnpaidCosts(Integer days);
     List<Map<String, Object>> getRevenueByDate(Date startDate, Date endDate);
+
+    List<CostDetail> searchCostDetails(Map<String, Object> params, User user);
+
+    int countCostDetails(Map<String, Object> params, User user);
+
     List<CostDetail> searchCostDetails(Map<String, Object> params);
     int countCostDetails(Map<String, Object> params);
 }

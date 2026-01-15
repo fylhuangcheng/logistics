@@ -1,16 +1,18 @@
 package jmu.fyl.logistics.service.impl;
 
 import jmu.fyl.logistics.dao.CostDetailDao;
+import jmu.fyl.logistics.dao.OrderDao;
 import jmu.fyl.logistics.entity.CostDetail;
+import jmu.fyl.logistics.entity.Order;
+import jmu.fyl.logistics.entity.User;
 import jmu.fyl.logistics.service.CostDetailService;
+import jmu.fyl.logistics.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,6 +21,11 @@ public class CostDetailServiceImpl implements CostDetailService {
     @Autowired
     private CostDetailDao costDetailDao;
 
+    @Autowired
+    private OrderDao orderDao;
+
+    @Autowired
+    private OrderService orderService;
     @Override
     public int addCostDetail(CostDetail costDetail) {
         // 设置默认值
@@ -159,12 +166,76 @@ public class CostDetailServiceImpl implements CostDetailService {
     }
 
     @Override
+    public List<CostDetail> searchCostDetails(Map<String, Object> params, User user) {
+        // 如果是客户，自动限制为只能查看自己的费用
+        if (user != null && user.getUserType() == 3) { // 客户类型为3
+            System.out.println("=== 客户权限过滤 - 费用查询 ===");
+            System.out.println("客户ID: " + user.getUserId());
+
+            // 获取客户的所有订单号
+            List<Order> customerOrders = orderService.getOrdersByUserId(user.getUserId());
+            System.out.println("客户订单数量: " + customerOrders.size());
+
+            if (customerOrders.isEmpty()) {
+                System.out.println("客户没有订单，返回空列表");
+                return new ArrayList<>();
+            }
+
+            // 提取订单号列表 - 用 orderNumber 进行匹配
+            List<String> orderNumbers = customerOrders.stream()
+                    .map(Order::getOrderNumber)
+                    .collect(Collectors.toList());
+
+            System.out.println("客户订单号列表: " + orderNumbers);
+            params.put("customerOrderNumbers", orderNumbers);
+        }
+        // 管理员（userType = 1）和司机（userType = 2）可以看到所有费用
+
+        List<CostDetail> costDetails = costDetailDao.findByCondition(params);
+        System.out.println("查询到的费用数量: " + costDetails.size());
+
+        // 为每个费用加载订单信息
+        for (CostDetail cost : costDetails) {
+            if (cost.getOrderId() != null) {
+                Order order = orderDao.findById(cost.getOrderId());
+                if (order != null) {
+                    cost.setOrder(order);
+                    System.out.println("加载订单信息: 费用ID=" + cost.getCostId() +
+                            ", 订单号=" + order.getOrderNumber());
+                }
+            }
+        }
+        return costDetails;
+    }
+
+    @Override
+    public int countCostDetails(Map<String, Object> params, User user) {
+        // 如果是客户，自动限制为只能查看自己的费用
+        if (user != null && user.getUserType() == 3) { // 客户类型为3
+            // 获取客户的所有订单号
+            List<Order> customerOrders = orderService.getOrdersByUserId(user.getUserId());
+            if (customerOrders.isEmpty()) {
+                return 0;
+            }
+
+            // 提取订单号列表 - 用 orderNumber 进行匹配
+            List<String> orderNumbers = customerOrders.stream()
+                    .map(Order::getOrderNumber)
+                    .collect(Collectors.toList());
+
+            params.put("customerOrderNumbers", orderNumbers);
+        }
+        return costDetailDao.countByCondition(params);
+    }
+
+    // 修改原有的方法，默认传入null表示管理员
+    @Override
     public List<CostDetail> searchCostDetails(Map<String, Object> params) {
-        return costDetailDao.findByCondition(params);
+        return searchCostDetails(params, null);
     }
 
     @Override
     public int countCostDetails(Map<String, Object> params) {
-        return costDetailDao.countByCondition(params);
+        return countCostDetails(params, null);
     }
 }

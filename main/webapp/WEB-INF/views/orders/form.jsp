@@ -255,6 +255,42 @@
                 }
             });
         });
+
+        // ========== 新增：当寄件人姓名输入"张三"时，自动填充电话 ==========
+        $('#senderName').on('blur', function() {
+            const senderName = $(this).val().trim();
+
+            // 如果寄件人姓名是"张三"，自动设置电话为"13800138222"
+            if (senderName === '张三') {
+                $('#senderPhone').val('13800138222');
+
+                // 可选：显示一个提示消息
+                Utils.showInfo('已根据寄件人姓名自动填充联系电话');
+
+                // 验证电话号码格式
+                const phoneRegex = /^1[3-9]\d{9}$/;
+                if (phoneRegex.test('13800138222')) {
+                    $('#senderPhone').removeClass('is-invalid');
+                    $('#senderPhone').next('.invalid-feedback').hide();
+                }
+            }
+        });
+
+        // 额外：当用户尝试修改电话时，如果是张三的特殊号码，可以给个提示
+        $('#senderPhone').on('focus', function() {
+            const senderName = $('#senderName').val().trim();
+            const phoneValue = $(this).val();
+
+            // 如果当前是张三且电话是预设的13800138222，提示用户
+            if (senderName === '张三' && phoneValue === '13800138222') {
+                if (confirm('这是"张三"的预设电话号码，确定要修改吗？')) {
+                    // 用户确认修改，不做任何操作
+                } else {
+                    // 用户取消修改，保持原值
+                    $(this).val('13800138222');
+                }
+            }
+        });
     });
 
     // 生成订单号的优化版本

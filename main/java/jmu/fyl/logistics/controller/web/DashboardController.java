@@ -10,12 +10,15 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 @Controller
 public class DashboardController {
 
     @Autowired
     private UserService userService;
+
+
 
     @GetMapping("/")
     public String index(HttpSession session) {

@@ -34,4 +34,5 @@ public interface OrderService {
     List<Order> getOrdersByVehicleId(Integer vehicleId);
     // 在 OrderService 接口中添加以下方法：
     List<Order> getOrdersByUserId(Integer userId);
+    Order getOrderByOrderNumber(String orderNumber);
 }

@@ -147,9 +147,9 @@
                 <form id="searchForm" action="${pageContext.request.contextPath}/cost_details" method="get">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="modalOrderId" class="form-label">订单ID</label>
-                            <input type="number" class="form-control" id="modalOrderId" name="orderId"
-                                   placeholder="请输入订单ID" value="${searchParams.orderId}" min="1">
+                            <label for="modalOrderNumber" class="form-label">订单号</label> <!-- 改为订单号 -->
+                            <input type="text" class="form-control" id="modalOrderNumber" name="orderNumber"
+                                   placeholder="请输入订单号" value="${searchParams.orderNumber}">
                         </div>
                         <div class="col-md-6">
                             <label for="modalCostType" class="form-label">费用类型</label>

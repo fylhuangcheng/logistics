@@ -2,18 +2,39 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">运输任务列表</h5>
+        <h5 class="mb-0">
+            运输任务列表
+            <c:if test="${isDriverView}">
+                <small class="text-muted">（我的任务）</small>
+            </c:if>
+        </h5>
         <div>
-            <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#searchModal">
-                <i class="fas fa-search"></i> 搜索
-            </button>
-            <a href="${pageContext.request.contextPath}/transport_tasks/add" class="btn btn-success btn-sm">
-                <i class="fas fa-plus"></i> 新增任务
-            </a>
+            <!-- 根据用户类型显示不同按钮 -->
+            <c:choose>
+                <c:when test="${currentUserType == 1}">
+                    <!-- 管理员：显示搜索和新增按钮 -->
+                    <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#searchModal">
+                        <i class="fas fa-search"></i> 搜索
+                    </button>
+                    <a href="${pageContext.request.contextPath}/transport_tasks/add" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> 新增任务
+                    </a>
+                </c:when>
+                <c:when test="${currentUserType == 2}">
+                    <!-- 司机：只显示刷新按钮 -->
+                    <button class="btn btn-secondary btn-sm" onclick="window.location.reload()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </c:when>
+                <c:otherwise>
+                    <!-- 其他用户：无操作按钮 -->
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 
     <div class="card-body">
+
         <c:if test="${not empty param.success}">
             <div class="alert alert-success alert-dismissible fade show">
                 操作成功！
@@ -33,7 +54,13 @@
                         <th>分配车辆</th>
                         <th>计划时间</th>
                         <th>状态</th>
-                        <th>操作</th>
+                        <c:if test="${currentUserType == 1}">
+                            <th>分配司机</th>
+                            <th>操作</th>
+                        </c:if>
+                        <c:if test="${currentUserType == 2}">
+                            <th>操作</th>
+                        </c:if>
                     </tr>
                     </thead>
                     <tbody>
@@ -113,8 +140,22 @@
                                     </c:when>
                                 </c:choose>
                             </td>
+
+                            <!-- 管理员视图显示司机信息 -->
+                            <c:if test="${currentUserType == 1}">
+                                <td>
+                                    <c:if test="${not empty task.driver and not empty task.driver.user}">
+                                        ${task.driver.user.realName}
+                                    </c:if>
+                                    <c:if test="${empty task.driver or empty task.driver.user}">
+                                        <span class="text-muted">未分配</span>
+                                    </c:if>
+                                </td>
+                            </c:if>
+
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
+                                    <!-- 所有用户都能查看详情 -->
                                     <a href="${pageContext.request.contextPath}/transport_tasks/${task.taskId}"
                                        class="btn btn-info" title="查看">
                                         <i class="fas fa-eye"></i>
@@ -123,10 +164,16 @@
                                        class="btn btn-warning" title="编辑">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button onclick="deleteTransportTask(${task.taskId})"
-                                            class="btn btn-danger" title="删除">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+
+                                    <!-- 只有管理员能编辑和删除 -->
+                                    <c:if test="${currentUserType == 1}">
+                                        <button onclick="deleteTransportTask(${task.taskId})"
+                                                class="btn btn-danger" title="删除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </c:if>
+
+                                    <!-- 司机只能查看，不能编辑删除 -->
                                 </div>
                             </td>
                         </tr>
@@ -164,8 +211,24 @@
         <c:if test="${empty result or result.code != 200 or empty result.data.list}">
             <div class="empty-state text-center py-5">
                 <i class="fas fa-truck-loading fa-3x text-muted mb-3"></i>
-                <h4>暂无运输任务数据</h4>
-                <p class="text-muted">点击"新增任务"按钮添加第一个运输任务</p>
+                <h4>
+                    <c:choose>
+                        <c:when test="${currentUserType == 2}">
+                            暂无分配给您的任务
+                        </c:when>
+                        <c:otherwise>
+                            暂无运输任务数据
+                        </c:otherwise>
+                    </c:choose>
+                </h4>
+                <p class="text-muted">
+                    <c:if test="${currentUserType == 1}">
+                        点击"新增任务"按钮添加第一个运输任务
+                    </c:if>
+                    <c:if test="${currentUserType == 2}">
+                        请联系管理员为您分配任务
+                    </c:if>
+                </p>
             </div>
         </c:if>
     </div>

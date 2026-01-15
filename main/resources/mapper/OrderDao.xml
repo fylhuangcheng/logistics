@@ -131,9 +131,7 @@
         SELECT * FROM orders ORDER BY create_time DESC
     </select>
 
-    <select id="findByOrderNumber" parameterType="string" resultMap="orderMap">
-        SELECT * FROM orders WHERE order_number = #{orderNumber}
-    </select>
+
 
     <select id="findByStatus" parameterType="int" resultMap="orderMap">
         SELECT * FROM orders
@@ -157,6 +155,11 @@
         SELECT * FROM orders
         WHERE create_user_id = #{userId}
         ORDER BY create_time DESC
+    </select>
+
+    <select id="findByOrderNumber" parameterType="string" resultMap="orderMap">
+        SELECT * FROM orders
+        WHERE order_number = #{orderNumber}
     </select>
 
     <select id="findByCreateTimeRange" resultMap="orderMap">

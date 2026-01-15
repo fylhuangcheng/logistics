@@ -219,22 +219,6 @@
                     </li>
                 </ul>
             </li>
-
-            <!-- 货物管理 -->
-            <li class="nav-item">
-                <a class="nav-link ${activeMenu == 'cargo_items' ? 'active' : ''}"
-                   href="${pageContext.request.contextPath}/cargo_items">
-                    <i class="fas fa-box me-2"></i> 货物管理
-                </a>
-                <ul class="nav flex-column ms-4">
-                    <li>
-                        <a class="nav-link ${subMenu == 'cargo_items_list' ? 'active' : ''}"
-                           href="${pageContext.request.contextPath}/cargo_items">
-                            <i class="fas fa-list me-1"></i> 货物列表
-                        </a>
-                    </li>
-                </ul>
-            </li>
         </c:if>
 
         <!-- 客户用户专属菜单 -->
@@ -265,7 +249,7 @@
             <li class="nav-item">
                 <a class="nav-link ${activeMenu == 'cargo_items' ? 'active' : ''}"
                    href="${pageContext.request.contextPath}/cargo_items">
-                    <i class="fas fa-box me-2"></i> 货物追踪
+                    <i class="fas fa-box me-2"></i> 我的货物
                 </a>
                 <ul class="nav flex-column ms-4">
                     <li>

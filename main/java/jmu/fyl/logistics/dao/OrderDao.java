@@ -35,4 +35,5 @@ public interface OrderDao extends BaseDao<Order> {
     @MapKey("date")
     List<Map<String, Object>> getOrderStatsByDate(@Param("startDate") Date startDate,
                                                   @Param("endDate") Date endDate);
+
 }

@@ -239,53 +239,86 @@
 
     <!-- 条件查询方法 -->
     <select id="findByCondition" parameterType="map" resultMap="costDetailMap">
-        SELECT * FROM cost_details
+        SELECT
+        cd.*,
+        o.order_id as o_order_id,
+        o.order_number,
+        o.sender_name,
+        o.receiver_name,
+        o.goods_type,
+        o.freight,
+        o.status as order_status,
+        o.create_time as order_create_time,
+        o.update_time as order_update_time
+        FROM cost_details cd
+        LEFT JOIN orders o ON cd.order_id = o.order_id
         <where>
-            <if test="orderId != null">AND order_id = #{orderId}</if>
-            <if test="taskId != null">AND task_id = #{taskId}</if>
-            <if test="costType != null">AND cost_type = #{costType}</if>
-            <if test="costCategory != null">AND cost_category = #{costCategory}</if>
-            <if test="paymentStatus != null">AND payment_status = #{paymentStatus}</if>
-            <if test="invoiceStatus != null">AND invoice_status = #{invoiceStatus}</if>
-            <if test="payerId != null">AND payer_id = #{payerId}</if>
-            <if test="payeeId != null">AND payee_id = #{payeeId}</if>
-            <if test="accountedBy != null">AND accounted_by = #{accountedBy}</if>
-            <if test="minAmount != null">AND amount >= #{minAmount}</if>
-            <if test="maxAmount != null">AND amount &lt;= #{maxAmount}</if>
+            <!-- 客户只能看到自己的订单费用 - 使用 orderNumber 匹配 -->
+            <if test="customerOrderNumbers != null and customerOrderNumbers.size() > 0">
+                AND o.order_number IN
+                <foreach item="orderNumber" collection="customerOrderNumbers" open="(" separator="," close=")">
+                    #{orderNumber}
+                </foreach>
+            </if>
+            <!-- 管理员查看所有费用时，不需要customerOrderNumbers条件 -->
+            <if test="customerOrderNumbers == null or customerOrderNumbers.size() == 0">
+                <if test="orderId != null">AND cd.order_id = #{orderId}</if>
+            </if>
+            <if test="taskId != null">AND cd.task_id = #{taskId}</if>
+            <if test="costType != null">AND cd.cost_type = #{costType}</if>
+            <if test="costCategory != null">AND cd.cost_category = #{costCategory}</if>
+            <if test="paymentStatus != null">AND cd.payment_status = #{paymentStatus}</if>
+            <if test="invoiceStatus != null">AND cd.invoice_status = #{invoiceStatus}</if>
+            <if test="payerId != null">AND cd.payer_id = #{payerId}</if>
+            <if test="payeeId != null">AND cd.payee_id = #{payeeId}</if>
+            <if test="accountedBy != null">AND cd.accounted_by = #{accountedBy}</if>
+            <if test="minAmount != null">AND cd.amount >= #{minAmount}</if>
+            <if test="maxAmount != null">AND cd.amount &lt;= #{maxAmount}</if>
             <if test="startTime != null and endTime != null">
-                AND cost_time BETWEEN #{startTime} AND #{endTime}
+                AND cd.cost_time BETWEEN #{startTime} AND #{endTime}
             </if>
             <if test="paymentStartTime != null and paymentEndTime != null">
-                AND payment_time BETWEEN #{paymentStartTime} AND #{paymentEndTime}
+                AND cd.payment_time BETWEEN #{paymentStartTime} AND #{paymentEndTime}
             </if>
         </where>
-        ORDER BY cost_time DESC
+        ORDER BY cd.cost_time DESC
         <if test="start != null and limit != null">
             LIMIT #{limit} OFFSET #{start}
         </if>
     </select>
 
     <select id="countByCondition" parameterType="map" resultType="int">
-        SELECT COUNT(*) FROM cost_details
+        SELECT COUNT(*)
+        FROM cost_details cd
+        LEFT JOIN orders o ON cd.order_id = o.order_id
         <where>
-            <if test="orderId != null">AND order_id = #{orderId}</if>
-            <if test="taskId != null">AND task_id = #{taskId}</if>
-            <if test="costType != null">AND cost_type = #{costType}</if>
-            <if test="costCategory != null">AND cost_category = #{costCategory}</if>
-            <if test="paymentStatus != null">AND payment_status = #{paymentStatus}</if>
-            <if test="invoiceStatus != null">AND invoice_status = #{invoiceStatus}</if>
-            <if test="payerId != null">AND payer_id = #{payerId}</if>
-            <if test="payeeId != null">AND payee_id = #{payeeId}</if>
-            <if test="accountedBy != null">AND accounted_by = #{accountedBy}</if>
-            <if test="minAmount != null">AND amount >= #{minAmount}</if>
-            <if test="maxAmount != null">AND amount &lt;= #{maxAmount}</if>
+            <!-- 客户只能看到自己的订单费用 - 使用 orderNumber 匹配 -->
+            <if test="customerOrderNumbers != null and customerOrderNumbers.size() > 0">
+                AND o.order_number IN
+                <foreach item="orderNumber" collection="customerOrderNumbers" open="(" separator="," close=")">
+                    #{orderNumber}
+                </foreach>
+            </if>
+            <!-- 管理员查看所有费用时，不需要customerOrderNumbers条件 -->
+            <if test="customerOrderNumbers == null or customerOrderNumbers.size() == 0">
+                <if test="orderId != null">AND cd.order_id = #{orderId}</if>
+            </if>
+            <if test="taskId != null">AND cd.task_id = #{taskId}</if>
+            <if test="costType != null">AND cd.cost_type = #{costType}</if>
+            <if test="costCategory != null">AND cd.cost_category = #{costCategory}</if>
+            <if test="paymentStatus != null">AND cd.payment_status = #{paymentStatus}</if>
+            <if test="invoiceStatus != null">AND cd.invoice_status = #{invoiceStatus}</if>
+            <if test="payerId != null">AND cd.payer_id = #{payerId}</if>
+            <if test="payeeId != null">AND cd.payee_id = #{payeeId}</if>
+            <if test="accountedBy != null">AND cd.accounted_by = #{accountedBy}</if>
+            <if test="minAmount != null">AND cd.amount >= #{minAmount}</if>
+            <if test="maxAmount != null">AND cd.amount &lt;= #{maxAmount}</if>
             <if test="startTime != null and endTime != null">
-                AND cost_time BETWEEN #{startTime} AND #{endTime}
+                AND cd.cost_time BETWEEN #{startTime} AND #{endTime}
             </if>
             <if test="paymentStartTime != null and paymentEndTime != null">
-                AND payment_time BETWEEN #{paymentStartTime} AND #{paymentEndTime}
+                AND cd.payment_time BETWEEN #{paymentStartTime} AND #{paymentEndTime}
             </if>
         </where>
     </select>
-
 </mapper>

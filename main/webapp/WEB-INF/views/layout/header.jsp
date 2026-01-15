@@ -82,11 +82,6 @@
                                 <i class="fas fa-truck"></i> 我的车辆
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link ${activeMenu == 'driver_cargo' ? 'active' : ''}" href="${pageContext.request.contextPath}/cargo_items">
-                                <i class="fas fa-box"></i> 货物管理
-                            </a>
-                        </li>
                     </c:if>
                     <!-- 客户用户专属菜单 -->
                     <c:if test="${sessionScope.user.userType == 3}">
@@ -97,7 +92,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link ${activeMenu == 'driver_cargo' ? 'active' : ''}" href="${pageContext.request.contextPath}/cargo_items">
-                                <i class="fas fa-box"></i> 货物追踪
+                                <i class="fas fa-box"></i> 我的货物
                             </a>
                         </li>
                         <li class="nav-item">
@@ -128,9 +123,6 @@
                                 <li>
                                     <a class="dropdown-item" href="${pageContext.request.contextPath}/users/profile">
                                         <i class="fas fa-user-circle"></i> 个人资料
-                                        <c:if test="${sessionScope.user.userType == 2}">
-                                            <span class="badge bg-info ms-1">含司机信息</span>
-                                        </c:if>
                                     </a>
                                 </li>
                                 <li>

@@ -382,48 +382,6 @@
         <p class="welcome-text">今天是 <span></span></p>
     </div>
 
-    <!-- 统计卡片（只对管理员显示） -->
-    <c:if test="${userType == 1}">
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon icon-order">
-                    📦
-                </div>
-                <div class="stat-content">
-                    <h3 id="orderCount">0</h3>
-                    <p>订单总数</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon icon-vehicle">
-                    🚚
-                </div>
-                <div class="stat-content">
-                    <h3 id="vehicleCount">0</h3>
-                    <p>车辆总数</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon icon-driver">
-                    👨‍✈️
-                </div>
-                <div class="stat-content">
-                    <h3 id="driverCount">0</h3>
-                    <p>司机总数</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon icon-cargo">
-                    📦
-                </div>
-                <div class="stat-content">
-                    <h3 id="cargoCount">0</h3>
-                    <p>货物总数</p>
-                </div>
-            </div>
-        </div>
-    </c:if>
-
     <!-- 轮播图 -->
     <div class="carousel-container">
         <h2 class="section-title">物流风采展示</h2>
@@ -544,18 +502,18 @@
                             <div class="action-desc">查看和接收运输任务</div>
                         </div>
                     </a>
+                    <a href="${pageContext.request.contextPath}/transport_tasks" class="action-btn">
+                        <div class="action-icon">📋</div>
+                        <div class="action-text">
+                            <div class="action-name">任务状态</div>
+                            <div class="action-desc">更改运输任务状态</div>
+                        </div>
+                    </a>
                     <a href="${pageContext.request.contextPath}/vehicles" class="action-btn">
                         <div class="action-icon">🚛</div>
                         <div class="action-text">
                             <div class="action-name">我的车辆</div>
                             <div class="action-desc">查看分配车辆信息</div>
-                        </div>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/cargo_items" class="action-btn">
-                        <div class="action-icon">📦</div>
-                        <div class="action-text">
-                            <div class="action-name">货物管理</div>
-                            <div class="action-desc">扫描和管理货物</div>
                         </div>
                     </a>
                     <a href="${pageContext.request.contextPath}/users/profile" class="action-btn">

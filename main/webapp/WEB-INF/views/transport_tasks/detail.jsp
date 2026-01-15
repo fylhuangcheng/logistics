@@ -59,8 +59,27 @@
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label text-muted">关联订单</label>
-                                            <input type="text" class="form-control"
-                                                   value="${not empty transportTask.orderIds ? transportTask.orderIds : '无'}" readonly>
+                                            <c:choose>
+                                                <c:when test="${not empty relatedOrderInfos and relatedOrderInfos.size() > 0}">
+                                                    <c:forEach items="${relatedOrderInfos}" var="orderInfo">
+                                                        <div class="input-group mb-2">
+                                                            <input type="text" class="form-control"
+                                                                   value="${orderInfo.orderNumber}" readonly>
+                                                            <a href="${pageContext.request.contextPath}/orders/${orderInfo.orderId}"
+                                                               class="btn btn-outline-info"
+                                                               target="_blank"
+                                                               title="查看订单 ${orderInfo.orderNumber}">
+                                                                查看
+                                                            </a>
+                                                        </div>
+                                                    </c:forEach>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" value="无" readonly>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
                                     </div>
                                 </div>
