@@ -286,7 +286,22 @@ public class OrderPageController extends BaseController {
                 model.addAttribute("currentUser", user);
             }
 
+            // 设置面包屑导航
+            List<Map<String, String>> breadcrumb = new ArrayList<>();
+            Map<String, String> home = new HashMap<>();
+            home.put("name", "首页");
+            home.put("url", "/");
+            breadcrumb.add(home);
 
+            Map<String, String> list = new HashMap<>();
+            list.put("name", "订单列表");
+            list.put("url", "/orders");
+            breadcrumb.add(list);
+
+            Map<String, String> current = new HashMap<>();
+            current.put("name", "订单详情");
+            breadcrumb.add(current);
+            model.addAttribute("breadcrumb", breadcrumb);
 
             return "layout/main";
         } catch (Exception e) {
