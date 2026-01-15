@@ -174,15 +174,6 @@ public class OrderPageController extends BaseController {
         return "layout/main";
     }
 
-    @GetMapping("/{id}/edit")
-    public String editForm(@PathVariable Integer id, Model model, HttpSession session) {
-        // 检查权限（保持原逻辑）
-        if (checkCustomerPermission(session)) {
-            model.addAttribute("error", "客户用户无法编辑订单");
-            model.addAttribute("pageTitle", "权限错误");
-            model.addAttribute("contentPage", "error/403.jsp");
-            return "layout/main";
-        }
 
         try {
             Order order = orderService.getOrderById(id);
